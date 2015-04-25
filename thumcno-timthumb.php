@@ -167,7 +167,7 @@ class timthumb {
         $this->cleanCache();
 
         $this->myHost = preg_replace('/^www\./i', '', $_SERVER['HTTP_HOST']);
-        $this->src = $this->param('src');
+        $this->src = $this->param('path_images') . '/' . $this->param('src');
         $this->url = parse_url($this->src);
         $this->src = preg_replace('/https?:\/\/(?:www\.)?' . $this->myHost . '/i', '', $this->src);
 
@@ -1044,8 +1044,8 @@ class timthumb {
     protected function securityChecks(){
     }
     protected function param($property, $default = ''){
-        if (isset ($_GET[$property])) {
-            return $_GET[$property];
+        if (isset (Thumcno::$params[$property])) {
+            return Thumcno::$params[$property];
         } else {
             return $default;
         }
