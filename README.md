@@ -17,20 +17,6 @@ http://www.binarymoon.co.uk/projects/timthumb/
 
 You can use for any projects with different domains.
 
-| parameter | stands for    | values                  | What it does                                                                                                                                                    |
-|-----------|---------------|-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| src       | source        | url to image            | Tells Thumbcno which image to resize                                                                                                                            |
-| w         | width         | the width to resize to  | Remove the width to scale proportionally (will then need the height)                                                                                            |
-| h         | height        | the height to resize to | Remove the height to scale proportionally (will then need the width)                                                                                            |
-| q         | quality       | 0-100                   | Compression quality. The higher the number the nicer the image will look. I wouldn’t recommend going any higher than about 95 else the image will get too large |
-| a         | alignment     | c,t,l,r,b,tl,tr,bl,br   | Crop alignment. c = center, t = top, b = bottom, r = right, l = left. The positions can be joined to create diagonal positions                                  |
-| zc        | zoom/crop     | 0,1,2,3                 | Change the cropping and scaling settings                                                                                                                        |
-| f         | filters       | too many to mention     | You can use the link above                                                                                                                                      |
-| s         | sharpen       |                         | Apply a sharpen filter to the image, makes scaled down images look a little crisper                                                                             |
-| cc        | canvas colour | hexadecimal color(#fff) | Change background colour. Most used when changing the zoom and crop settings, which in turn can add borders to the image.                                       |
-| ct        | canvas transp | true (1)                | Use transparency and ignore background colour                                                                                                                   |
-
-
 How it works?
 ------------------
 
@@ -103,6 +89,52 @@ Now, go to your browser and open the url:
 http://localhost:8080/?src=/example_image/dubai.jpg&w=200&h=200&q=80
 You will see this:
 ![dubai thumb](./example_image/thumbnail.jpg)
+
+Possible params
+-------------------
+
+This list is the params that you can pass in url ($_GET):
+
+
+| parameter | stands for    | values                  | What it does                                                                                                                                                    |
+|-----------|---------------|-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| src       | source        | url to image            | Tells Thumbcno which image to resize                                                                                                                            |
+| w         | width         | the width to resize to  | Remove the width to scale proportionally (will then need the height)                                                                                            |
+| h         | height        | the height to resize to | Remove the height to scale proportionally (will then need the width)                                                                                            |
+| q         | quality       | 0-100                   | Compression quality. The higher the number the nicer the image will look. I wouldn’t recommend going any higher than about 95 else the image will get too large |
+| a         | alignment     | c,t,l,r,b,tl,tr,bl,br   | Crop alignment. c = center, t = top, b = bottom, r = right, l = left. The positions can be joined to create diagonal positions                                  |
+| zc        | zoom/crop     | 0,1,2,3                 | Change the cropping and scaling settings                                                                                                                        |
+| f         | filters       | too many to mention     | You can use the link above                                                                                                                                      |
+| s         | sharpen       |                         | Apply a sharpen filter to the image, makes scaled down images look a little crisper                                                                             |
+| cc        | canvas colour | hexadecimal color(#fff) | Change background colour. Most used when changing the zoom and crop settings, which in turn can add borders to the image.                                       |
+| ct        | canvas transp | true (1)                | Use transparency and ignore background colour                                                                                                                   |
+
+
+Possible strategy
+-------------------
+
+Suppose that you have 3 projects (ex: project01, project02 and project03) with the urls http://project01.com, http://project02.com and http://project03.com.
+All projects has a subdirectory called /uploads/ with the dynamic images.
+
+You can make this steps:
+
+First: Create files `i.project01.com.ini`, `i.project02.com.ini` and `i.project03.com.ini` in /apps directory.
+Seconde: Use this params for each ini file.
+
+```
+port 80
+file_cache_suffix = .project0<id>
+file_cache_directory = cache
+path_images = project_images_0<id>
+```
+
+Third: Create symbolic links to this folders:
+
+```
+ln -s /path/to/project<id>/images /path/to/thumbcno/project<id>
+```
+
+Fourth: http://i.project01.com?src=images/dubai.jpg&width=300&h=300
 
 !TODO
 --------------------
