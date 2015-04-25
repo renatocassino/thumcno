@@ -114,7 +114,7 @@ Possible strategy
 -------------------
 
 Suppose that you have 3 projects (ex: project01, project02 and project03) with the urls http://project01.com, http://project02.com and http://project03.com.
-All projects has a subdirectory called /uploads/ with the dynamic images.
+All projects have a subdirectory called /uploads/ with the dynamic images.
 
 You can make this steps:
 
@@ -131,7 +131,7 @@ path_images = project_images_0<id>
 Third: Create symbolic links to this folders:
 
 ```
-ln -s /path/to/project<id>/images /path/to/thumbcno/project<id>
+ln -s /path/to/project<id>/uploads /path/to/thumbcno/project<id>
 ```
 
 Fourth: http://i.project01.com?src=images/dubai.jpg&width=300&h=300
