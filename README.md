@@ -84,7 +84,7 @@ default_s = 0            ; Default sharpen value. Allows overrid in timthumb-con
 default_cc = ffffff      ; Default canvas colour. Allows overrid in timthumb-config.php
 default_width = 100      ; Default thumbnail width. Allows overrid in timthumb-config.php
 default_height = 100     ; Default thumbnail height. Allows overrid in timthumb-config.php
-```ini
+```
 
 You need to replace only the necessary.
 
@@ -115,7 +115,7 @@ Add param route like this
 route = /(P?<w>\d+)_(P?<h>\d+)/(P?<src>\(.)+) ; ex: i.domain.com/200/150/images/my_image.jpg == i.domain.com?w=200&h=200&src=images/my_image.jpg
 ....
 
-```ini
+```
 
 Bugs
 ---------------
