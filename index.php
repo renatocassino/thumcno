@@ -7,4 +7,4 @@ foreach(glob('./src/*.php') as $filename) {
 
 $thumcno = new Thumcno();
 
-require 'thumcno-timthumb.php';
+require './thumcno-timthumb.php';
