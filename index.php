@@ -1,19 +1,10 @@
 <?php
-require 'vendor/autoload.php';
+define('PATH',__DIR__);
 
-function compress_image($source_url, $destination_url, $quality) {
-    $info = getimagesize($source_url);
-
-    if ($info['mime'] == 'image/jpeg') $image = imagecreatefromjpeg($source_url);
-    elseif ($info['mime'] == 'image/gif') $image = imagecreatefromgif($source_url);
-    elseif ($info['mime'] == 'image/png') $image = imagecreatefrompng($source_url);
-
-    //save file
-    imagejpeg($image, $destination_url, $quality);
-
-    //return destination file
-    return $destination_url;
+foreach(glob('./src/*.php') as $filename) {
+    require $filename;
 }
 
-//usage
-$compressed = compress_image('images/unsplash1.jpeg', 'cache/unsplash1.jpg', 90);
+$thumcno = new Thumcno();
+
+require 'thumcno-timthumb.php';
