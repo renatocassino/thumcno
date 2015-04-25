@@ -119,7 +119,7 @@ All projects have a subdirectory called /uploads/ with the dynamic images.
 You can make this steps:
 
 First: Create files `i.project01.com.ini`, `i.project02.com.ini` and `i.project03.com.ini` in /apps directory.
-Seconde: Use this params for each ini file.
+Second: Use this params for each ini file.
 
 ```
 port 80
@@ -134,7 +134,9 @@ Third: Create symbolic links to this folders:
 ln -s /path/to/project<id>/uploads /path/to/thumbcno/project<id>
 ```
 
-Fourth: http://i.project01.com?src=images/dubai.jpg&width=300&h=300
+Fourth: Set your nginx/apache to root thumbcno project and try the url:
+
+Ex: http://i.project01.com?src=images/dubai.jpg&width=300&h=300
 
 !TODO
 --------------------
