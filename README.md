@@ -3,13 +3,8 @@ Thumcno - A Tacno Thumbnail Generator in runtime
 
 ## Installation
 
-If you use linux, you must install this library.
-
 ```
-sudo add-apt-repository "deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) main"
-sudo add-apt-repository "deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) universe"
-sudo apt-get update
-sudo apt-get install imagemagick php5-imagick
+git clone git@github.com:tacnoman/thumcno.git
 ```
 
 Based on timthumb:
