@@ -5,6 +5,8 @@ Thumcno - A Tacno Thumbnail Generator in runtime
 
 ```
 git clone git@github.com:tacnoman/thumcno.git
+cd thumcno
+php -S localhost:8080
 ```
 
 Based on timthumb:
@@ -136,7 +138,7 @@ Fourth: Set your nginx/apache to root thumbcno project and try the url:
 
 Ex: http://i.project01.com?src=images/dubai.jpg&width=300&h=300
 
-URL Friendly
+URL Friendly (BETA)
 ---------------
 
 If you want to use friendly urls, you can set the params in your .ini file passing the URLS params. (You must know abour regex)
@@ -150,10 +152,11 @@ Another example:
 ^\/(?P<w>\d+)x(?P<h>\d+)\/(?P<q>\d{1,3})\/?
 /<width>x<height>/<quality>/?src=example_images/dubai.jpg
 
-;Ps: If you doesn't set any params in your regex, you can pass like $_GET param.
+Ps: If you doesn't set any params in your regex, you can pass like $_GET param.
+Ps2: If you are running in the terminal cli (php -S localhost:8080) you cannot see with the param "src".
 ```
 
 Bugs
 ---------------
 
-Send-me an email: <renatocassino@gmail.com>
+Send-me an email: < renatocassino@gmail.com >.
