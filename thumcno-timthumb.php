@@ -233,7 +233,7 @@ class timthumb {
             $this->debug(1, "Local image path is {$this->localImage}");
             $this->localImageMTime = @filemtime($this->localImage);
             //We include the mtime of the local file in case in changes on disk.
-            $this->cachefile = $this->cacheDirectory . '/' . Thumcno::$params['file_cache_prefix'] . $cachePrefix . md5($this->salt . $this->localImageMTime . $_SERVER ['QUERY_STRING'] . $this->fileCacheVersion) . Thumcno::$params['file_cache_suffix'];
+            $this->cachefile = $this->cacheDirectory . '/' . Thumcno::$params['file_cache_prefix'] . $cachePrefix . md5($this->salt . $this->localImageMTime . implode('&',Thumcno::$url_params) . $this->fileCacheVersion) . Thumcno::$params['file_cache_suffix'];
         }
         $this->debug(2, "Cache file is: " . $this->cachefile);
 
@@ -438,7 +438,7 @@ class timthumb {
                 $timeAgo = time() - Thumcno::$params['file_cache_max_file_age'];
                 foreach($files as $file){
                     if(@filemtime($file) < $timeAgo){
-                        $this->debug(3, "Deleting cache file $file older than max age: " . file_cache_max_file_age . " seconds");
+                        $this->debug(3, "Deleting cache file $file older than max age: " . Thumcno::$params['file_cache_max_file_age'] . " seconds");
                         @unlink($file);
                     }
                 }
