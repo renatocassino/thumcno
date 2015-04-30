@@ -87,7 +87,10 @@ php -S localhost:8080
 Now, go to your browser and open the url:
 
 http://localhost:8080/?src=/example_image/dubai.jpg&w=200&h=200&q=80
+
 You will see this:
+
+
 ![dubai thumb](./example_image/thumbnail.jpg)
 
 Possible params
@@ -138,17 +141,21 @@ Fourth: Set your nginx/apache to root thumbcno project and try the url:
 
 Ex: http://i.project01.com?src=images/dubai.jpg&width=300&h=300
 
-!TODO
---------------------
+URL Friendly
+---------------
 
-Add param route like this
+If you want to use friendly urls, you can set the params in your .ini file passing the URLS params. (You must know abour regex)
+The param is `route` and you can use the same url params in this format:
 
 ```
-.....
+(?P<name_of_param>\regex)
+ex: (?P<w>\d+) -> Regex for para w (width) accepting only integers values
 
-route = /(P?<w>\d+)_(P?<h>\d+)/(P?<src>\(.)+) ; ex: i.domain.com/200/150/images/my_image.jpg == i.domain.com?w=200&h=200&src=images/my_image.jpg
-....
+Another example:
+^\/(?P<w>\d+)x(?P<h>\d+)\/(?P<q>\d{1,3})\/?
+/<width>x<height>/<quality>/?src=example_images/dubai.jpg
 
+;Ps: If you doesn't set any params in your regex, you can pass like $_GET param.
 ```
 
 Bugs
