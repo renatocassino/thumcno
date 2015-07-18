@@ -16,6 +16,10 @@ class Thumcno
     public static $default;
 
     public function __construct() {
+        if(!defined('THUMCNO_PATH')) {
+            $this->error('500','You must define the const THUMCNO_PATH.');
+        }
+
         $this->setVars();
         $this->checkFile();
         $this->checkPort();
