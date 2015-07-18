@@ -62,12 +62,12 @@ class Thumcno
             if(isset(self::$params['sizes']) && is_array(self::$params['sizes'])) {
                 $sizes = self::$params['sizes'];
 
-                if(isset($sizes[$style])) {
+                if (isset($sizes[$style])) {
 
-                    if(!preg_match('/^(\d+)x(\d+)$/', $sizes[$style]))
+                    if (!preg_match('/^(\d+)x(\d+)$/', $sizes[$style]))
                         $this->error(500, 'You must set size as <width>x<height>. Ex: 400x400');
 
-                    $sizes = explode('x',$sizes[$style]);
+                    $sizes = explode('x', $sizes[$style]);
 
                     self::$url_params['w'] = $sizes[0];
                     self::$url_params['h'] = $sizes[1];
@@ -75,6 +75,22 @@ class Thumcno
                     $this->error(404, 'This style does not exists.');
                 }
             }
+        } else {
+            // Verify if the size defined exists
+            $sizeStr = self::$url_params['w'] . 'x' . self::$url_params['h'];
+
+            $forbidden = true;
+            foreach(self::$params['sizes'] as $currentSize) {
+                if($sizeStr == $currentSize) {
+                    $forbidden = false;
+                    break;
+                }
+            }
+
+            if($forbidden) {
+                $this->error(403, 'You cannot use this size for image.');
+            }
+
         }
     }
 
