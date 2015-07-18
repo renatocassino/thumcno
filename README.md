@@ -3,6 +3,36 @@ Thumcno - A Tacno Thumbnail Generator in runtime
 
 ## Installation
 
+You can install with the composer in an exist project or you can clone the project and begin to start to work!
+
+If you want to install package via composer, you need to add in your `composer.json` file:
+
+```json
+{
+   "require": {
+      "tacnoman/thumcno": "dev-master"
+      ...
+   }
+}
+```
+
+After install, you must create the directory with the config files. You can create with this command:
+```
+$ php bin/thumcno install /path/to/directory mydomain.com
+
+# If you must a help, you can run
+php bin/thumcno --help
+```
+
+Now, in your project you must insert the path in a define:
+
+```php
+define('THUMCNO_PATH','/path/to/directory');
+```
+
+Without composer
+-----------------
+
 ```
 git clone git@github.com:tacnoman/thumcno.git
 cd thumcno
@@ -22,6 +52,11 @@ The Google recommend that your dynamic images uses another domain (or a subdomai
 First step:
 You need to create in folder `apps` a file called `<yourdomain>.ini`. In this file you will be set the params that you want (example: cache directory, etc).
 This params will replace the params in default.ini (you can change it).
+
+If you are using composer, you can run the command to create the file:
+```
+$ php bin/thumcno add:domain /path/to/directory mydomain.com
+```
 
 This is the `default.ini`.
 
@@ -73,6 +108,27 @@ You need to replace only the necessary.
 
 See working in local machine
 ----------------------------
+
+To see in local machine:
+
+With composer
+-------------
+
+You must put this php code:
+
+```php
+include "vendor/autoload.php";
+
+define('THUMCNO_PATH', '/path/to/directory');
+
+$thumcno = new Tacnoman\Thumcno();
+$thumcno->start();
+
+exit();
+```
+
+Without composer
+--------------
 
 To see in your local machine, run this commands:
 
