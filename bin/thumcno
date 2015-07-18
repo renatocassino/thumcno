@@ -33,7 +33,8 @@ switch($command) {
         echo '  Welcome to Thumcno, the server to generate thumbnail images to your projects.'. PHP_EOL;
         echo '  You can run theese commands bellow: '. PHP_EOL. PHP_EOL;
 
-        echo $colors->getColoredString('  install /path/to/directory','green'), '            Install a structure of directories to run your projects';
+        echo $colors->getColoredString('  install /path/directory','green'), '                      Install a structure of directories to run your projects' . PHP_EOL;
+        echo $colors->getColoredString('  add:domain /path/directory my_domain.com','green'), '     Add a new domain ini file in /path/apps (path is root directory)' . PHP_EOL;
         break;
 
     case 'install':
@@ -70,6 +71,23 @@ switch($command) {
 
         echo $colors->getColoredString('Now, you can edit the ini files and read our documentation in: https://github.com/tacnoman/thumcno', 'light_green');
         break;
+
+    case 'add:domain':
+
+        if(!isset($argv[2])) {
+            echo $colors->getColoredString('You must pass the path to directory. More infos in --help command.', 'red') . PHP_EOL . PHP_EOL;
+            return 0;
+        } elseif(!isset($argv[3])) {
+            echo $colors->getColoredString('You must pass the domain. More infos in --help command.', 'red') . PHP_EOL . PHP_EOL;
+            return 0;
+        }
+
+        $path = $argv[2];
+        $domain = $argv[3];
+
+        copy(__DIR__ . '/../apps/localhost.ini', $path . '/apps/' . $domain . '.ini');
+
+        echo $colors->getColoredString('The file `' . $path . '/apps/' . $domain . '.ini` was created!', 'green') . PHP_EOL;
 }
 
 echo PHP_EOL , PHP_EOL;
