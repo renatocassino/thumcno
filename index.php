@@ -1,9 +1,9 @@
 <?php
-define('PATH',__DIR__);
+define('THUMCNO_PATH',__DIR__);
 
 foreach(glob('./src/*.php') as $filename) {
     require $filename;
 }
 
-$thumcno = new Thumcno();
-require './thumcno-timthumb.php';
+$thumcno = new Tacnoman\Thumcno();
+$thumcno->start();

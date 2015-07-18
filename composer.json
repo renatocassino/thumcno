@@ -1,0 +1,23 @@
+{
+  "name": "tacnoman/thumcno",
+  "keywords": ["Thumb","Thumbnail","TimThumb","resize","server", "php"],
+  "description": "Package to serve your thumbnails",
+  "license": "MIT",
+
+  "authors": [
+    {
+      "name": "Renato Cassino",
+      "email": "renatocassino@gmail.com"
+    }
+  ],
+
+  "minimum-stability": "beta",
+  "require": {
+    "php": ">=5.3.0"
+  },
+  "autoload": {
+    "psr-0": {
+      "Tacnoman": "src/"
+    }
+  }
+}

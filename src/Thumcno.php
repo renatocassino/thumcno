@@ -1,5 +1,7 @@
 <?php
 
+namespace Tacnoman;
+
 /**
  * Class Thumcno - Class to generate thumbnail.
  *
@@ -71,12 +73,20 @@ class Thumcno
 
                     self::$url_params['w'] = $sizes[0];
                     self::$url_params['h'] = $sizes[1];
+
+
                 } else {
                     $this->error(404, 'This style does not exists.');
                 }
             }
         } else {
             // Verify if the size defined exists
+            if( !isset(self::$url_params['w']) ||
+                !isset(self::$url_params['h'])
+            ) {
+                $this->error(500, 'You must define the size or style size.');
+            }
+
             $sizeStr = self::$url_params['w'] . 'x' . self::$url_params['h'];
 
             $forbidden = true;
@@ -104,7 +114,7 @@ class Thumcno
             'port' => $_SERVER['SERVER_PORT']
         ];
 
-        self::$default = parse_ini_file(PATH . '/apps/default.ini', true);
+        self::$default = parse_ini_file(THUMCNO_PATH . '/apps/default.ini', true);
     }
 
     /**
@@ -113,7 +123,7 @@ class Thumcno
      */
     public function checkFile()
     {
-        $filename = PATH . '/apps/' . self::$config['domain'] . '.ini';
+        $filename = THUMCNO_PATH . '/apps/' . self::$config['domain'] . '.ini';
         if( file_exists( $filename) ) {
             self::$params = array_replace_recursive(
                 self::$default,
@@ -155,5 +165,12 @@ class Thumcno
     protected function error($code, $message) {
         header('X-Error-Message: ' . $message, true, $code);
         die($message);
+    }
+
+    /**
+     * Start service
+     */
+    public function start() {
+        ThumcnoServer::start();
     }
 }

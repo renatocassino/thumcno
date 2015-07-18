@@ -1,4 +1,7 @@
 <?php
+
+namespace Tacnoman;
+
 /**
  * TimThumb by Ben Gillbanks and Mark Maunder
  * Based on work done by Tim McDaniels and Darren Hoyt
@@ -99,9 +102,7 @@ if(! isset($ALLOWED_SITES)){
 // -------------- STOP EDITING CONFIGURATION HERE --------------
 // -------------------------------------------------------------
 
-timthumb::start();
-
-class timthumb {
+class ThumcnoServer {
     protected $src = "";
     protected $is404 = false;
     protected $docRoot = "";
@@ -124,7 +125,7 @@ class timthumb {
     protected static $curlDataWritten = 0;
     protected static $curlFH = false;
     public static function start(){
-        $tim = new timthumb();
+        $tim = new ThumcnoServer();
         $tim->handleErrors();
         $tim->securityChecks();
         if($tim->tryBrowserCache()){
@@ -1113,8 +1114,8 @@ class timthumb {
     }
     protected function setMemoryLimit(){
         $inimem = ini_get('memory_limit');
-        $inibytes = timthumb::returnBytes($inimem);
-        $ourbytes = timthumb::returnBytes(Thumcno::$params['memory_limit']);
+        $inibytes = ThumcnoServer::returnBytes($inimem);
+        $ourbytes = ThumcnoServer::returnBytes(Thumcno::$params['memory_limit']);
         if($inibytes < $ourbytes){
             ini_set ('memory_limit', Thumcno::$params['memory_limit']);
             $this->debug(3, "Increased memory from $inimem to " . Thumcno::$params['memory_limit']);
@@ -1150,7 +1151,7 @@ class timthumb {
             curl_setopt ($curl, CURLOPT_RETURNTRANSFER, TRUE);
             curl_setopt ($curl, CURLOPT_HEADER, 0);
             curl_setopt ($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
-            curl_setopt ($curl, CURLOPT_WRITEFUNCTION, 'timthumb::curlWrite');
+            curl_setopt ($curl, CURLOPT_WRITEFUNCTION, 'ThumcnoServer::curlWrite');
             @curl_setopt ($curl, CURLOPT_FOLLOWLOCATION, true);
             @curl_setopt ($curl, CURLOPT_MAXREDIRS, 10);
 
