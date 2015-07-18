@@ -19,5 +19,6 @@
     "psr-0": {
       "Tacnoman": "src/"
     }
-  }
+  },
+  "bin": ["bin/thumcno"]
 }

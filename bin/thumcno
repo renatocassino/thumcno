@@ -1,0 +1,75 @@
+#!/usr/bin/php
+<?php
+
+require __DIR__ . '/color.php';
+
+$colors = new Colors();
+
+if(count($argv) == 1) {
+
+    echo $colors->getColoredString("You can create the structure for the thumcno.\n\n", 'yellow');
+    echo 'You can run ';
+    echo $colors->getColoredString("vendor/bin/thumcno --help", 'green');
+    echo ' to more info.' . PHP_EOL;
+    return 0;
+}
+
+$command = $argv[1];
+
+switch($command) {
+    case '--help':
+
+        echo "  .---------. .--.   .--.  .--.   .--. .--.     .--.   .-------.   .--.    .--.  .-------." . PHP_EOL;
+        echo "  '---.  .--' |  |   |  |  |  |   |  | |   \   /   |  '    __   '  |   \   |  | '         |" . PHP_EOL;
+        echo "      |  |    |  |___|  |  |  |   |  | |    \ /    |  |  .'  '--'  |    \  |  | |  .---.  |" . PHP_EOL;
+        echo "      |  |    |   ___   |  |  |   |  | |     '     |  |  |         |  |\ \ |  | |  |   |  |" . PHP_EOL;
+        echo "      |  |    |  |   |  |  |  |   |  | |  |\  /|   |  |  |         |  | \ \|  | |  |   |  |" . PHP_EOL;
+        echo "      |  |    |  |   |  |  \  \__/  /  |  | \/ |   |  |  '.__.--.  |  |  \    | |  '---'  |" . PHP_EOL;
+        echo "      '..'    '..'   '..'   '.____.'   '..'    '...'  '._______.'  '..'   '...' '._______.'" . PHP_EOL;
+
+        echo PHP_EOL . '                                                   At: ' .
+            $colors->getColoredString('https://github.com/tacnoman/thumcno','blue') . PHP_EOL. PHP_EOL;
+
+        echo '  Welcome to Thumcno, the server to generate thumbnail images to your projects.'. PHP_EOL;
+        echo '  You can run theese commands bellow: '. PHP_EOL. PHP_EOL;
+
+        echo $colors->getColoredString('  install /path/to/directory','green'), '            Install a structure of directories to run your projects';
+        break;
+
+    case 'install':
+
+        if(!isset($argv[2])) {
+            echo $colors->getColoredString('You must pass the path to directory. More infos in --help command.', 'red') . PHP_EOL . PHP_EOL;
+            return 0;
+        } elseif(!isset($argv[3])) {
+            echo $colors->getColoredString('You must pass the domain. More infos in --help command.', 'red') . PHP_EOL . PHP_EOL;
+            return 0;
+        }
+
+        $path = $argv[2];
+        $domain = $argv[3];
+
+        mkdir($path,0777,true);
+
+        mkdir($path . '/' . 'apps');
+        mkdir($path . '/' . 'cache', 0777);
+
+        copy(__DIR__ . '/../apps/default.ini', $path . '/apps/default.ini');
+        copy(__DIR__ . '/../apps/localhost.ini', $path . '/apps/' . $domain . '.ini');
+
+        echo $colors->getColoredString('Successfully instaled!', 'green') . PHP_EOL;
+
+        echo $colors->getColoredString($path, 'light_gray') . PHP_EOL;
+        echo $colors->getColoredString('├─ apps', 'ligh_gray') . PHP_EOL;
+        echo $colors->getColoredString('│  ├─ default.ini', 'ligh_gray') . PHP_EOL;
+        echo $colors->getColoredString('│  └─ ' . $domain . '.ini', 'ligh_gray') . PHP_EOL;
+        echo $colors->getColoredString('└─ cache', 'ligh_gray') . PHP_EOL;
+
+
+        echo PHP_EOL;
+
+        echo $colors->getColoredString('Now, you can edit the ini files and read our documentation in: https://github.com/tacnoman/thumcno', 'light_green');
+        break;
+}
+
+echo PHP_EOL , PHP_EOL;
