@@ -108,6 +108,38 @@ This list is the params that you can pass in url ($_GET):
 | s         | sharpen       |                         | Apply a sharpen filter to the image, makes scaled down images look a little crisper                                                                             |
 | cc        | canvas colour | hexadecimal color(#fff) | Change background colour. Most used when changing the zoom and crop settings, which in turn can add borders to the image.                                       |
 | ct        | canvas transp | true (1)                | Use transparency and ignore background colour                                                                                                                   |
+| style     | thumb sizes   | string                  | String to define the style of the size, for example, thumb=30x30, medium=200x200 and big=800x800                                                                |
+
+
+Set possible sizes
+-------------------
+
+If you don't set the sizes, you could have a big problem!
+Suppose that your URI is this <w>/<h>/<src>. A hacker could make a script to generate ALL POSSIBLE SIZES.
+
+If you minimal size is 20 and the maximum size is 220, it's possible to generate (in a simple anagram 200x200) 40,000.
+Disconsidering the quality. If you considerer the quality, a hacker could generate 4,000,000 images.
+
+The thumcno will save all images in cache and this is a big problem.
+
+But, now you can define the possible sizes to generate in your website. It's simple:
+
+```
+; <your_domain>.ini
+; Possible_sizes
+[sizes]
+thumb = 30x30
+medium = 200x200
+large = 800x800
+```
+
+Now, you can generate thumbs only with sizes 30x30, 200x200 and 800x800.
+If you don't want to show the size in the URL, you can use the `style` (like paperclip for ruby).
+
+The style will replace the size. An example for this config is:
+
+http://<domain>/?src=dubai.jpg&style=medium -> Without friendly url
+http://<domain>/medium/dubai.jpg            -> Considering a friendly url, where the uri is /(?P<style>\w+)/(?P<src>(\w|-|\.)+)
 
 
 Possible strategy
