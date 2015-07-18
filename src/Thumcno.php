@@ -2,7 +2,7 @@
 
 /**
  * Class Thumcno - Class to generate thumbnail.
- * 
+ *
  * @author Tacnoman - Renato Cassino <renatocassino@gmail.com>
  */
 class Thumcno
