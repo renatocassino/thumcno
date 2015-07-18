@@ -18,10 +18,10 @@ If you want to install package via composer, you need to add in your `composer.j
 
 After install, you must create the directory with the config files. You can create with this command:
 ```
-$ php bin/thumcno install /path/to/directory mydomain.com
+$ php vendor/bin/thumcno install /path/to/directory mydomain.com
 
 # If you must a help, you can run
-php bin/thumcno --help
+php vendor/bin/thumcno --help
 ```
 
 Now, in your project you must insert the path in a define:
@@ -55,7 +55,7 @@ This params will replace the params in default.ini (you can change it).
 
 If you are using composer, you can run the command to create the file:
 ```
-$ php bin/thumcno add:domain /path/to/directory mydomain.com
+$ php vendor/bin/thumcno add:domain /path/to/directory mydomain.com
 ```
 
 This is the `default.ini`.
