@@ -1,7 +1,9 @@
 <?php
 
 /**
- * Class Thumcno
+ * Class Thumcno - Class to generate thumbnail.
+ * 
+ * @author Tacnoman - Renato Cassino <renatocassino@gmail.com>
  */
 class Thumcno
 {
@@ -50,6 +52,28 @@ class Thumcno
         foreach($changedParams as $parameter) {
             if(isset($params[$parameter])) {
                 self::$url_params[$parameter] = $params[$parameter];
+            }
+        }
+
+        // Check if the style is defined
+        if(isset($params['style'])) {
+            $style = $params['style'];
+
+            if(isset(self::$params['sizes']) && is_array(self::$params['sizes'])) {
+                $sizes = self::$params['sizes'];
+
+                if(isset($sizes[$style])) {
+
+                    if(!preg_match('/^(\d+)x(\d+)$/', $sizes[$style]))
+                        $this->error(500, 'You must set size as <width>x<height>. Ex: 400x400');
+
+                    $sizes = explode('x',$sizes[$style]);
+
+                    self::$url_params['w'] = $sizes[0];
+                    self::$url_params['h'] = $sizes[1];
+                } else {
+                    $this->error(404, 'This style does not exists.');
+                }
             }
         }
     }

@@ -117,7 +117,7 @@ Set possible sizes
 If you don't set the sizes, you could have a big problem!
 Suppose that your URI is this `<w>/<h>/<src>`. A hacker could make a script to generate ALL POSSIBLE SIZES.
 
-If you minimal size is 20 and the maximum size is 220, it's possible to generate (in a simple anagram 200x200) 40,000.
+If your minimal size is 20 and the maximum size is 220, it's possible to generate (in a simple anagram 200x200) 40,000.
 Disconsidering the quality. If you considerer the quality, a hacker could generate 4,000,000 images.
 
 The thumcno will save all images in cache and this is a big problem.
