@@ -83,7 +83,7 @@ php -S localhost:8080
 
 Now, go to your browser and open the url:
 
-http://localhost:8080/?src=/example_image/dubai.jpg&w=200&h=200&q=80
+http://localhost:8080/?src=/dubai.jpg&w=200&h=200&q=80
 
 You will see this:
 
