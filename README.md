@@ -47,7 +47,7 @@ You can use for any projects with different domains.
 How it works?
 ------------------
 
-The Google recommend that your dynamic images uses another domain (or a subdomain) and with this lib you will can do it with multiple projects in different domains.
+The Google recommend that your dynamic images use another domain (or a subdomain) and with this lib you will can do it with multiple projects in different domains.
 
 First step:
 You need to create in folder `apps` a file called `<yourdomain>.ini`. In this file you will be set the params that you want (example: cache directory, etc).
@@ -134,7 +134,7 @@ To see in your local machine, run this commands:
 
 ```
 cd /path/to/thumbcno
-php -S localhost:8080
+php -S localhost:8080 index.php
 ```
 
 Now, go to your browser and open the url:
@@ -226,7 +226,7 @@ Fourth: Set your nginx/apache to root thumbcno project and try the url:
 
 Ex: http://i.project01.com?src=images/dubai.jpg&width=300&h=300
 
-URL Friendly (BETA)
+URL Friendly
 ---------------
 
 If you want to use friendly urls, you can set the params in your .ini file passing the URLS params. (You must know abour regex)
@@ -240,8 +240,12 @@ Another example:
 ^\/(?P<w>\d+)x(?P<h>\d+)\/(?P<q>\d{1,3})\/?
 /<width>x<height>/<quality>/?src=example_images/dubai.jpg
 
+One more example:
+^\/(?P<w>\d+)x(?P<h>\d+)\/(?P<q>\d{1,3})\/(?<src>[\w.-]+)?
+/<width>x<height>/<quality>/<source.jpg>
+http://localhost:8080/200x200/80/dubai.jpg
+
 Ps: If you doesn't set any params in your regex, you can pass like $_GET param.
-Ps2: If you are running in the terminal cli (php -S localhost:8080) you cannot see with the param "src".
 ```
 
 Bugs
