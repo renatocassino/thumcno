@@ -1,2 +1,4 @@
 .idea
 cache
+
+tests/_output/*
