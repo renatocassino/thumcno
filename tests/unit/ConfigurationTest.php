@@ -10,6 +10,10 @@ class ConfigurationTest extends \Codeception\Test\Unit
 
     protected function _before()
     {
+        foreach(glob(dirname(dirname(__DIR__)) . '/src/Tacnoman/**.php') as $file) {
+            echo $file;
+            require_once $file;
+        }
     }
 
     protected function _after()
@@ -17,8 +21,16 @@ class ConfigurationTest extends \Codeception\Test\Unit
     }
 
     // tests
-    public function testMe()
+    public function testSingletonConfig()
     {
-	$this->assertTrue(true);
+        $config = \Tacnoman\Config::getInstance();
+        $this->assertInstanceOf('\Tacnoman\Config', $config);
     }
+
+    #public function testSingletonError()
+    #{
+    #    $this->expectException(\Exception::class, function() {
+    #        new \Tacnoman\Config();
+    #    });
+    #}
 }

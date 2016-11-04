@@ -15,9 +15,10 @@ class Thumcno
     public static $url_params;
     public static $default;
 
-    public function __construct() {
-        if(!defined('THUMCNO_PATH')) {
-            $this->error('500','You must define the const THUMCNO_PATH.');
+    public function __construct()
+    {
+        if (!defined('THUMCNO_PATH')) {
+            $this->error('500', 'You must define the const THUMCNO_PATH.');
         }
 
         $this->setVars();
@@ -28,13 +29,15 @@ class Thumcno
     }
 
     /**
-     * Get url params
+     * Get url params.
      */
-    public function getUrlParams() {
-        if(isset(self::$params['route'])) {
-            preg_match('/' .self::$params['route'] . '/', $_SERVER['REQUEST_URI'], $params);
-            if(empty($params))
+    public function getUrlParams()
+    {
+        if (isset(self::$params['route'])) {
+            preg_match('/'.self::$params['route'].'/', $_SERVER['REQUEST_URI'], $params);
+            if (empty($params)) {
                 $this->error('404', 'This route is invalid!');
+            }
 
             $params = array_replace($params, $_GET);
         } else {
@@ -45,114 +48,110 @@ class Thumcno
     }
 
     /**
-     * Get only url valid params and ignore the invalid
+     * Get only url valid params and ignore the invalid.
      *
      * @param $params
      */
-    private function validateUrlParams($params) {
+    private function validateUrlParams($params)
+    {
         $changedParams = [
             'src', 'w', 'h', 'q', 'a',
-            'zc', 'f', 's', 'cc', 'ct'
+            'zc', 'f', 's', 'cc', 'ct',
         ];
 
-        foreach($changedParams as $parameter) {
-            if(isset($params[$parameter])) {
+        foreach ($changedParams as $parameter) {
+            if (isset($params[$parameter])) {
                 self::$url_params[$parameter] = $params[$parameter];
             }
         }
 
         // Check if the style is defined
-        if(isset($params['style'])) {
+        if (isset($params['style'])) {
             $style = $params['style'];
 
-            if(isset(self::$params['sizes']) && is_array(self::$params['sizes'])) {
+            if (isset(self::$params['sizes']) && is_array(self::$params['sizes'])) {
                 $sizes = self::$params['sizes'];
 
                 if (isset($sizes[$style])) {
-
-                    if (!preg_match('/^(\d+)x(\d+)$/', $sizes[$style]))
+                    if (!preg_match('/^(\d+)x(\d+)$/', $sizes[$style])) {
                         $this->error(500, 'You must set size as <width>x<height>. Ex: 400x400');
+                    }
 
                     $sizes = explode('x', $sizes[$style]);
 
                     self::$url_params['w'] = $sizes[0];
                     self::$url_params['h'] = $sizes[1];
-
-
                 } else {
                     $this->error(404, 'This style does not exists.');
                 }
             }
         } else {
             // Verify if the size defined exists
-            if( !isset(self::$url_params['w']) ||
+            if (!isset(self::$url_params['w']) ||
                 !isset(self::$url_params['h'])
             ) {
                 $this->error(500, 'You must define the size or style size.');
             }
 
-            $sizeStr = self::$url_params['w'] . 'x' . self::$url_params['h'];
+            $sizeStr = self::$url_params['w'].'x'.self::$url_params['h'];
 
             $forbidden = true;
-            foreach(self::$params['sizes'] as $currentSize) {
-                if($sizeStr == $currentSize) {
+            foreach (self::$params['sizes'] as $currentSize) {
+                if ($sizeStr == $currentSize) {
                     $forbidden = false;
                     break;
                 }
             }
 
-            if($forbidden) {
+            if ($forbidden) {
                 $this->error(403, 'You cannot use this size for image.');
             }
-
         }
     }
 
     /**
-     * Set the config and get the `default.ini` file
+     * Set the config and get the `default.ini` file.
      */
     public function setVars()
     {
-        if(isset($_SERVER['HTTP_HOST'])) {
+        if (isset($_SERVER['HTTP_HOST'])) {
             $domain = $_SERVER['HTTP_HOST'];
-            if(strstr($domain, ':')) {
+            if (strstr($domain, ':')) {
                 $domain = explode(':', $domain)[0];
             }
         } else {
             $domain = $_SERVER['SERVER_NAME'];
         }
-        
+
         self::$config = [
             'domain' => explode(':', $_SERVER['HTTP_HOST'])[0],
-            'port' => $_SERVER['SERVER_PORT']
+            'port' => $_SERVER['SERVER_PORT'],
         ];
 
-        self::$default = parse_ini_file(THUMCNO_PATH . '/apps/default.ini', true);
+        self::$default = parse_ini_file(THUMCNO_PATH.'/apps/default.ini', true);
     }
 
     /**
      * Check if the file for domain exists. If not exist, throw exception and get 500 error page.
-     *
      */
     public function checkFile()
     {
-        $filename = THUMCNO_PATH . '/apps/' . self::$config['domain'] . '.ini';
-        if( file_exists( $filename) ) {
+        $filename = THUMCNO_PATH.'/apps/'.self::$config['domain'].'.ini';
+        if (file_exists($filename)) {
             self::$params = array_replace_recursive(
                 self::$default,
                 parse_ini_file($filename, true)
             );
-        }
-        else {
-            $this->error(500, 'You must create the file `' . __DIR__ . '/apps/' . self::$config['domain'] . '.ini');
+        } else {
+            $this->error(500, 'You must create the file `'.__DIR__.'/apps/'.self::$config['domain'].'.ini');
         }
     }
 
     /**
-     * Replace the <domain>.ini config in default.ini file
-     *
+     * Replace the <domain>.ini config in default.ini file.
      */
-    public function applyUrlParams() {
+    public function applyUrlParams()
+    {
         self::$params = array_replace_recursive(
             self::$params,
             self::$url_params
@@ -160,30 +159,32 @@ class Thumcno
     }
 
     /**
-     * Validate if the port is valid
-     *
+     * Validate if the port is valid.
      */
-    public function checkPort() {
-        if(self::$config['port'] != self::$params['port']) {
-            $this->error(500, 'Your port is invalid! You must run in ' . self::$params['port']);
+    public function checkPort()
+    {
+        if (self::$config['port'] != self::$params['port']) {
+            $this->error(500, 'Your port is invalid! You must run in '.self::$params['port']);
         }
     }
 
     /**
-     * Exception
+     * Exception.
      *
      * @param $code
      * @param $message
      */
-    protected function error($code, $message) {
-        header('X-Error-Message: ' . $message, true, $code);
+    protected function error($code, $message)
+    {
+        header('X-Error-Message: '.$message, true, $code);
         die($message);
     }
 
     /**
-     * Start service
+     * Start service.
      */
-    public function start() {
+    public function start()
+    {
         ThumcnoServer::start();
     }
 }
