@@ -113,8 +113,17 @@ class Thumcno
      */
     public function setVars()
     {
+        if(isset($_SERVER['HTTP_HOST'])) {
+            $domain = $_SERVER['HTTP_HOST'];
+            if(strstr($domain, ':')) {
+                $domain = explode(':', $domain)[0];
+            }
+        } else {
+            $domain = $_SERVER['SERVER_NAME'];
+        }
+        
         self::$config = [
-            'domain' => $_SERVER['SERVER_NAME'],
+            'domain' => explode(':', $_SERVER['HTTP_HOST'])[0],
             'port' => $_SERVER['SERVER_PORT']
         ];
 
