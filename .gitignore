@@ -1,4 +1,4 @@
 .idea
 cache
-
+vendor/
 tests/_output/*
