@@ -28,6 +28,9 @@ class Config {
      */
     public $appConfigs = [];
 
+    /** @var array Parans in `$_GET` or in route */
+    public $urlParams = [];
+
      /**
       * protected __construct()
       */
@@ -148,5 +151,24 @@ class Config {
             return parse_ini_file($pathFile, true);
         }
         throw new \Exception("File `{$pathFile}` does not exists.");
+    }
+
+    /**
+     * Get params in route if defined or get `$_GET`.
+     * @return void
+     */
+    public function setUrlParams()
+    {
+        if (isset($this->appConfigs['route'])) {
+            preg_match('/'.$this->appConfigs['route'].'/', $_SERVER['REQUEST_URI'], $params);
+            if (empty($params)) {
+                throw new \Exception('This route is invalid!');
+            }
+            $params = array_replace($params, $_GET);
+        } else {
+            $params = $_GET;
+        }
+
+        $this->urlParams = $params;
     }
 }

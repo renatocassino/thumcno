@@ -109,4 +109,34 @@ class ConfigurationTest extends \Codeception\Test\Unit
         $this->config->setAppConfig();
         $this->assertEquals($this->config->appConfigs['port'], 80);
     }
+
+    public function testUrlParamsWithoutRoute() {
+        $_GET = ['w' => 200, 'h' => 300];
+        $this->config->appConfigs = [];
+        $this->config->setUrlParams();
+        $this->assertEquals($this->config->urlParams, ['w' => 200, 'h' => 300]);        
+    }
+
+    public function testUrlParamsWithRoute() {
+        $_GET = [];
+        $_SERVER['REQUEST_URI'] = '/200x300/100/dubai.jpg';
+        $this->config->appConfigs = ['route' => '^\/(?P<w>\d+)x(?P<h>\d+)\/(?P<q>\d{1,3})\/(?<src>[\w.-]+)'];
+        $this->config->setUrlParams();
+        $this->assertEquals($this->config->urlParams['w'], 200);
+        $this->assertEquals($this->config->urlParams['h'], 300);
+        $this->assertEquals($this->config->urlParams['q'], 100);
+        $this->assertEquals($this->config->urlParams['src'], 'dubai.jpg');
+    }
+
+    public function testUrlParamsWithRouteAndGet() {
+        $_GET = ['q' => 80];
+        $_SERVER['REQUEST_URI'] = '/200x300/dubai.jpg';
+        $this->config->appConfigs = ['route' => '^\/(?P<w>\d+)x(?P<h>\d+)\/(?<src>[\w.-]+)'];
+        $this->config->setUrlParams();
+        $this->assertEquals($this->config->urlParams['w'], 200);
+        $this->assertEquals($this->config->urlParams['h'], 300);
+        $this->assertEquals($this->config->urlParams['q'], 80);
+        $this->assertEquals($this->config->urlParams['src'], 'dubai.jpg');
+
+    }
 }
