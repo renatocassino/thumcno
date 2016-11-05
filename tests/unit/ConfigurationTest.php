@@ -57,7 +57,7 @@ class ConfigurationTest extends \Codeception\Test\Unit
         $this->assertEquals($this->config->domain, 'myhostname');
     }
 
-    public function testPort()
+    public function testSetPort()
     {
         $_SERVER['SERVER_PORT'] = 8888;
         $this->config->setPort();
@@ -69,8 +69,9 @@ class ConfigurationTest extends \Codeception\Test\Unit
         $_ENV['THUMCNO_PATH'] = '/';
         $_SERVER['SERVER_PORT'] = 8888;
         $_SERVER['SERVER_NAME'] = 'myhostname.local';
-        $this->config->setConfiguration();
-        $this->assertEquals($this->config->host, 'http://myhostname.local:8888');
+        $this->config->setDomain();
+        $this->config->setPort();
+        $this->assertEquals($this->config->getHost(), 'http://myhostname.local:8888');
     }
 
     public function testHostnameWithDefaultPort()
@@ -78,7 +79,34 @@ class ConfigurationTest extends \Codeception\Test\Unit
         $_ENV['THUMCNO_PATH'] = '/';
         $_SERVER['SERVER_PORT'] = 80;
         $_SERVER['SERVER_NAME'] = 'myhostname.local';
-        $this->config->setConfiguration();
-        $this->assertEquals($this->config->host, 'http://myhostname.local');
+        $this->config->setDomain();
+        $this->config->setPort();
+        $this->assertEquals($this->config->getHost(), 'http://myhostname.local');
+    }
+
+    public function testGetParseIniFileIfExists()
+    {
+        $_ENV['THUMCNO_PATH'] = dirname(__DIR__) . '/thumcno_path';
+        $configApp = $this->config->getParseIniFile('default');
+        $this->assertEquals($configApp['port'], 80);
+    }
+
+    public function testSettingAppConfigsWithAValidDomain()
+    {
+        $_ENV['THUMCNO_PATH'] = dirname(__DIR__) . '/thumcno_path';
+        $_SERVER['SERVER_NAME'] = 'myhostname.local';
+        $this->config->setAppConfig();
+        $this->assertEquals($this->config->appConfigs['port'], 8080);
+    }
+
+    public function testSettingAppConfigWithOnceDomain() {
+        $_ENV['THUMCNO_PATH'] = dirname(__DIR__) . '/thumcno_path';
+        $_ENV['PERMIT_ONLY_NAME'] = true;
+        $_SERVER['SERVER_NAME'] = 'doesnotexistdomain';
+
+        $this->config->appConfigs = [];
+        $this->config->setDomain();
+        $this->config->setAppConfig();
+        $this->assertEquals($this->config->appConfigs['port'], 80);
     }
 }
