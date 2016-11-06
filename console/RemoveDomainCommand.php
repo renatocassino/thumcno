@@ -29,7 +29,7 @@ class RemoveDomainCommand extends Command
         $domain = $helper->ask($input, $output, $question);
         
         $question = new ChoiceQuestion('Are you sure delete the domain <comment>'.$domain.'</comment>: ', ['yes','no'], 0 );
-        $question->setErrorMessage('Color %s is invalid.');
+        $question->setErrorMessage('Answer `%s` is invalid.');
         $answer = $helper->ask($input, $output, $question);
 
         if ($answer == 'no') {

@@ -1,4 +1,7 @@
 .idea
+.env
 cache
 vendor/
+*\#
+*~
 tests/_output/*
