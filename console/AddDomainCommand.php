@@ -11,7 +11,7 @@ class AddDomainCommand extends Command
     {
         $this
           // the name of the command (the part after "bin/console")
-          ->setName('add:domain')
+          ->setName('domain:add')
 
           // the short description shown while running "php bin/console list"
           ->setDescription('Adding a domain file.')
