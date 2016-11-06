@@ -30,6 +30,7 @@ class ClearCacheCommand extends Command
                 continue;
             }
             $fileSize += filesize($file);
+            unlink($file);
             $output->write('<comment>.</comment>');
         }
 
