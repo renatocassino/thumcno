@@ -4,6 +4,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
+use Symfony\Component\Console\Question\ChoiceQuestion;
 
 class RemoveDomainCommand extends Command
 {
@@ -26,10 +27,12 @@ class RemoveDomainCommand extends Command
         $helper = $this->getHelper('question');
         $question = new Question('Please enter the domain to remove: <info>(without http://)</info>: ', '');
         $domain = $helper->ask($input, $output, $question);
-
-        $question = new Question('Are you sure delete the domain <comment>'.$domain.'</comment> (yes|no): ', false, '/^(y|n)/i');
+        
+        $question = new ChoiceQuestion('Are you sure delete the domain <comment>'.$domain.'</comment>: ', ['yes','no'], 0 );
+        $question->setErrorMessage('Color %s is invalid.');
         $answer = $helper->ask($input, $output, $question);
-        if ($answer == 'no' || $answer == 'n' || !$answer) {
+
+        if ($answer == 'no') {
             return;
         }
 
