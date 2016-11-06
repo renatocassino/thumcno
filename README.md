@@ -1,6 +1,16 @@
 Thumcno - A Tacno Thumbnail Generator in runtime
 =================
 
+## Pre requisites
+
+To use thumcno, you need install the php-gd first.
+
+```bash
+ $ sudo apt-get install php-gd # Ubuntu
+ $ sudo yum install php-gd # CentOs
+ $ brew install php-gd # Mac OS
+```
+
 ## Installation
 
 You can install with the composer in an exist project or you can clone the project and begin to start to work!
