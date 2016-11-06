@@ -4,10 +4,12 @@ namespace Tacnoman;
 
 /**
  * Class to get configurations
- * Singleton pattern
+ * Singleton pattern.
+ *
  * @author Tacnoman <renatocassino@gmail.com>
  */
-class Config {
+class Config
+{
     private static $_instance = null;
 
     /** @var string Should be a domain */
@@ -16,14 +18,15 @@ class Config {
     /** @var string Should be a path readable */
     public $thumcnoPath;
 
-    /** @var integer The server port */
+    /** @var int The server port */
     public $port;
 
     /** @var array|null url params */
     public $params = [];
 
     /**
-     * Configs defined in `.ini` file
+     * Configs defined in `.ini` file.
+     *
      * @var array
      */
     public $appConfigs = [];
@@ -31,27 +34,30 @@ class Config {
     /** @var array Parans in `$_GET` or in route */
     public $urlParams = [];
 
-     /**
-      * protected __construct()
-      */
-    protected function __construct() {}
+    /**
+     * protected __construct().
+     */
+    protected function __construct()
+    {
+    }
 
-     /**
-      * Get instance
-      * @return \Tacnoman\Config
-      */
+    /**
+     * Get instance.
+     *
+     * @return \Tacnoman\Config
+     */
     public static function getInstance()
     {
-        if(is_null(self::$_instance)) {
+        if (is_null(self::$_instance)) {
             self::$_instance = new static();
         }
+
         return self::$_instance;
     }
 
     /**
      * Set configuration
-     * Called once a time
-     * @return void
+     * Called once a time.
      */
     public function setConfiguration()
     {
@@ -59,24 +65,24 @@ class Config {
         $this->setDomain();
         $this->setPort();
         $this->setAppConfig();
+        $this->validateConfigs();
     }
 
     /**
-     * Set thumcno path
+     * Set thumcno path.
+     *
      * @throws Exception if the enviroment variable `THUMCNO_PATH` not defined
-     * @return void
      */
     public function setThumcnoPath()
     {
-        if(!isset($_ENV['THUMCNO_PATH'])) {
+        if (!isset($_ENV['THUMCNO_PATH'])) {
             throw new \Exception('You must define the const `THUMCNO_PATH`.');
         }
         $this->thumcnoPath = $_ENV['THUMCNO_PATH'];
     }
 
     /**
-     * Set domain
-     * @return void
+     * Set domain.
      */
     public function setDomain()
     {
@@ -93,8 +99,7 @@ class Config {
     }
 
     /**
-     * Set port
-     * @return void
+     * Set port.
      */
     public function setPort()
     {
@@ -102,16 +107,18 @@ class Config {
     }
 
     /**
-     * Get host
+     * Get host.
+     *
      * @return string host
      */
     public function getHost()
     {
         $host = "http://{$this->domain}";
-        if(80 != $this->port) {
+        if (80 != $this->port) {
             $host .= ":{$this->port}";
         }
-        return $host;        
+
+        return $host;
     }
 
     /**
@@ -129,25 +136,28 @@ class Config {
                 $defaultConfigs,
                 $appConfigs
             );
-        } catch(\Exception $e) {
-            if(isset($_ENV['PERMIT_ONLY_NAME']) && $_ENV['PERMIT_ONLY_NAME']) {
+        } catch (\Exception $e) {
+            if (isset($_ENV['PERMIT_ONLY_NAME']) && $_ENV['PERMIT_ONLY_NAME']) {
                 $this->appConfigs = $defaultConfigs;
             } else {
-                throw new Exception("You have an invalid domain.");
+                throw new Exception('This domain is invalid.');
             }
         }
     }
 
     /**
-     * Parse ini file
+     * Parse ini file.
+     *
      * @param string $filename is the name of file without extension
+     *
      * @throws \Exception if file not exists
+     *
      * @return array|null
      */
     public function getParseIniFile($filename)
     {
-        $pathFile = $_ENV['THUMCNO_PATH'] . '/apps/' . $filename . '.ini';
-        if(file_exists($pathFile)) {
+        $pathFile = $_ENV['THUMCNO_PATH'].'/apps/'.$filename.'.ini';
+        if (file_exists($pathFile)) {
             return parse_ini_file($pathFile, true);
         }
         throw new \Exception("File `{$pathFile}` does not exists.");
@@ -155,7 +165,6 @@ class Config {
 
     /**
      * Get params in route if defined or get `$_GET`.
-     * @return void
      */
     public function setUrlParams()
     {
@@ -170,5 +179,16 @@ class Config {
         }
 
         $this->urlParams = $params;
+    }
+
+    /**
+     * Transform and validate the url params in config;.
+     */
+    public function validateConfigs()
+    {
+        $urlValidator = new UrlValidator();
+        $urlValidator->urlParams = $this->urlParams;
+        $urlValidator->transformUrlParams();
+        $this->urlParams = $urlValidator->urlParams;
     }
 }

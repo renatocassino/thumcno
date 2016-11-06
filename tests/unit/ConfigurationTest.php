@@ -11,9 +11,9 @@ class ConfigurationTest extends \Codeception\Test\Unit
     protected function _before()
     {
         $rootPath = dirname(dirname(__DIR__));
-        require_once $rootPath . '/vendor/autoload.php';
+        require_once $rootPath.'/vendor/autoload.php';
 
-        foreach(glob($rootPath . '/src/Tacnoman/**.php') as $file) {
+        foreach (glob($rootPath.'/src/Tacnoman/**.php') as $file) {
             require_once $file;
         }
 
@@ -52,7 +52,7 @@ class ConfigurationTest extends \Codeception\Test\Unit
     {
         $_SERVER['SERVER_NAME'] = 'myhostname';
         unset($_SERVER['HTTP_HOST']);
-        
+
         $this->config->setDomain();
         $this->assertEquals($this->config->domain, 'myhostname');
     }
@@ -86,21 +86,22 @@ class ConfigurationTest extends \Codeception\Test\Unit
 
     public function testGetParseIniFileIfExists()
     {
-        $_ENV['THUMCNO_PATH'] = dirname(__DIR__) . '/thumcno_path';
+        $_ENV['THUMCNO_PATH'] = dirname(__DIR__).'/thumcno_path';
         $configApp = $this->config->getParseIniFile('default');
         $this->assertEquals($configApp['port'], 80);
     }
 
     public function testSettingAppConfigsWithAValidDomain()
     {
-        $_ENV['THUMCNO_PATH'] = dirname(__DIR__) . '/thumcno_path';
+        $_ENV['THUMCNO_PATH'] = dirname(__DIR__).'/thumcno_path';
         $_SERVER['SERVER_NAME'] = 'myhostname.local';
         $this->config->setAppConfig();
         $this->assertEquals($this->config->appConfigs['port'], 8080);
     }
 
-    public function testSettingAppConfigWithOnceDomain() {
-        $_ENV['THUMCNO_PATH'] = dirname(__DIR__) . '/thumcno_path';
+    public function testSettingAppConfigWithOnceDomain()
+    {
+        $_ENV['THUMCNO_PATH'] = dirname(__DIR__).'/thumcno_path';
         $_ENV['PERMIT_ONLY_NAME'] = true;
         $_SERVER['SERVER_NAME'] = 'doesnotexistdomain';
 
@@ -110,14 +111,16 @@ class ConfigurationTest extends \Codeception\Test\Unit
         $this->assertEquals($this->config->appConfigs['port'], 80);
     }
 
-    public function testUrlParamsWithoutRoute() {
+    public function testUrlParamsWithoutRoute()
+    {
         $_GET = ['w' => 200, 'h' => 300];
         $this->config->appConfigs = [];
         $this->config->setUrlParams();
-        $this->assertEquals($this->config->urlParams, ['w' => 200, 'h' => 300]);        
+        $this->assertEquals($this->config->urlParams, ['w' => 200, 'h' => 300]);
     }
 
-    public function testUrlParamsWithRoute() {
+    public function testUrlParamsWithRoute()
+    {
         $_GET = [];
         $_SERVER['REQUEST_URI'] = '/200x300/100/dubai.jpg';
         $this->config->appConfigs = ['route' => '^\/(?P<w>\d+)x(?P<h>\d+)\/(?P<q>\d{1,3})\/(?<src>[\w.-]+)'];
@@ -128,7 +131,8 @@ class ConfigurationTest extends \Codeception\Test\Unit
         $this->assertEquals($this->config->urlParams['src'], 'dubai.jpg');
     }
 
-    public function testUrlParamsWithRouteAndGet() {
+    public function testUrlParamsWithRouteAndGet()
+    {
         $_GET = ['q' => 80];
         $_SERVER['REQUEST_URI'] = '/200x300/dubai.jpg';
         $this->config->appConfigs = ['route' => '^\/(?P<w>\d+)x(?P<h>\d+)\/(?<src>[\w.-]+)'];
@@ -137,6 +141,5 @@ class ConfigurationTest extends \Codeception\Test\Unit
         $this->assertEquals($this->config->urlParams['h'], 300);
         $this->assertEquals($this->config->urlParams['q'], 80);
         $this->assertEquals($this->config->urlParams['src'], 'dubai.jpg');
-
     }
 }
