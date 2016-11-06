@@ -1,15 +1,22 @@
 #!/usr/bin/env php
 <?php
 
+$autoload = __DIR__ . '/vendor/autoload.php';
+if(!file_exists($autoload)) {
+    echo 'You must run `composer install` first.';
+    return;
+}
+
 require __DIR__.'/vendor/autoload.php';
 
 use Symfony\Component\Console\Application;
 
-// Reading .env file
+// Reading .env file if exists
 try {
     $dotenv = new Dotenv\Dotenv(__DIR__);
     $dotenv->load();
 } catch(\Exception $e) {
+    // If you are running config.
 }
 
 if(!isset($_ENV['THUMCNO_PATH'])) {

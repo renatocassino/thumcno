@@ -26,7 +26,7 @@ class ConfigCommand extends Command
     {
         $helper = $this->getHelper('question');
 
-        $output->writeln('');
+        $output->writeln(PHP_EOL);
         $output->writeln('  ████████╗██╗  ██╗██╗   ██╗███╗   ███╗ ██████╗███╗   ██╗ ██████╗ ');
         $output->writeln('  ╚══██╔══╝██║  ██║██║   ██║████╗ ████║██╔════╝████╗  ██║██╔═══██╗');
         $output->writeln('     ██║   ███████║██║   ██║██╔████╔██║██║     ██╔██╗ ██║██║   ██║');
@@ -48,7 +48,11 @@ class ConfigCommand extends Command
 
         $envFileContent = '';
         if($thumcnoPath) {
-            $envFileContent .= 'THUMCNO_PATH=' . rtrim($thumcnoPath, '/') . PHP_EOL;
+            $thumcnoPath = rtrim($thumcnoPath, '/');
+            $envFileContent .= 'THUMCNO_PATH=' . $thumcnoPath . PHP_EOL;
+            $_ENV['THUMCNO_PATH'] = $thumcnoPath;
+        } else {
+            $_ENV['THUMCNO_PATH'] = dirname(__DIR__);
         }
         $envFileContent .= 'PERMIT_ONLY_DOMAIN=';
         $envFileContent .= ($useForOnlyDomain == 'yes') ? '1' : '0';
@@ -56,6 +60,27 @@ class ConfigCommand extends Command
         $arq = fopen(dirname(__DIR__).'/.env', 'w');
         fwrite($arq, $envFileContent);
         fclose($arq);
+
+        $output->write(PHP_EOL);
+        $output->writeln(' <info>✔</info> File .env was created');
+
+        # Cache dir
+        $this->createCacheDir();
+        $output->writeln(' <info>✔</info> The cache dir was created' . PHP_EOL);
+
+        $output->writeln('<info>The project was successfully configured. Now, you can run:</info>' . PHP_EOL);
+        $output->writeln('    <comment>$ ./thumcno server</comment>' . PHP_EOL);
+        $output->writeln('And use the THUMCNO.' . PHP_EOL);
+    }
+
+    private function createCacheDir()
+    {
+        $cacheDir = $_ENV['THUMCNO_PATH'].'/cache';
+        if(!is_dir($cacheDir)) {
+            mkdir($cacheDir, 0777, true);
+        }
+
+        touch($cacheDir . '/index.html');
     }
 }
 
