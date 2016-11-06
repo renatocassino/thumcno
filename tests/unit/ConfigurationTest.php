@@ -102,7 +102,7 @@ class ConfigurationTest extends \Codeception\Test\Unit
     public function testSettingAppConfigWithOnceDomain()
     {
         $_ENV['THUMCNO_PATH'] = dirname(__DIR__).'/thumcno_path';
-        $_ENV['PERMIT_ONLY_NAME'] = true;
+        $_ENV['PERMIT_ONLY_DOMAIN'] = true;
         $_SERVER['SERVER_NAME'] = 'doesnotexistdomain';
 
         $this->config->appConfigs = [];

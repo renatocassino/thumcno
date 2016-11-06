@@ -135,7 +135,7 @@ class Config
                 $appConfigs
             );
         } catch (\Exception $e) {
-            if (isset($_ENV['PERMIT_ONLY_NAME']) && $_ENV['PERMIT_ONLY_NAME']) {
+            if (isset($_ENV['PERMIT_ONLY_DOMAIN']) && $_ENV['PERMIT_ONLY_DOMAIN']) {
                 $this->appConfigs = $defaultConfigs;
             } else {
                 throw new Exception('This domain is invalid.');
