@@ -2,15 +2,25 @@
 
 namespace Tacnoman;
 
+/**
+ * Class to transform and validate url.
+ *
+ * @author Tacnoman <renatocassino@gmail.com>
+ */
 class UrlValidator
 {
+    /** @var array Parans in `$_GET` or in route */
     public $urlParams = [];
 
+    /** @var array Possible params in `$_GET` or in route */
     protected $_changedParams = [
        'src', 'w', 'h', 'q', 'a',
        'zc', 'f', 's', 'cc', 'ct',
     ];
 
+    /**
+     * Transform url params for a valid format if is possible.
+     */
     public function transformUrlParams($appConfigs)
     {
         // Check if the style is defined
@@ -22,6 +32,11 @@ class UrlValidator
         $this->filterUrlParams($this->urlParams);
     }
 
+    /**
+     * Check if the url is valid.
+     *
+     * @return bool
+     */
     public function isValid()
     {
         // Verify if the size defined exists
@@ -34,6 +49,9 @@ class UrlValidator
         return true;
     }
 
+    /**
+     * Filter url, removing the useless params.
+     */
     public function filterUrlParams()
     {
         $params = [];
@@ -46,6 +64,11 @@ class UrlValidator
         $this->urlParams = $params;
     }
 
+    /**
+     * Getting sizes from styles defined in array.
+     *
+     * @throw Exception if the style does not found
+     */
     public function getSizeFromStyle($style, $appStyles)
     {
         if (isset($appStyles[$style])) {

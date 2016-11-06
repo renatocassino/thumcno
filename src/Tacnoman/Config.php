@@ -31,7 +31,7 @@ class Config
      */
     public $appConfigs = [];
 
-    /** @var array Parans in `$_GET` or in route */
+    /** @var array Params in `$_GET` or in route */
     public $urlParams = [];
 
     /**
