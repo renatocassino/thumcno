@@ -64,6 +64,7 @@ class Config
         $this->setThumcnoPath();
         $this->setDomain();
         $this->setPort();
+        $this->setUrlParams();
         $this->setAppConfig();
         $this->validateConfigs();
     }
@@ -75,9 +76,6 @@ class Config
      */
     public function setThumcnoPath()
     {
-        if (!isset($_ENV['THUMCNO_PATH'])) {
-            throw new \Exception('You must define the const `THUMCNO_PATH`.');
-        }
         $this->thumcnoPath = $_ENV['THUMCNO_PATH'];
     }
 
@@ -188,7 +186,7 @@ class Config
     {
         $urlValidator = new UrlValidator();
         $urlValidator->urlParams = $this->urlParams;
-        $urlValidator->transformUrlParams();
+        $urlValidator->transformUrlParams($this->appConfigs);
         $this->urlParams = $urlValidator->urlParams;
     }
 }

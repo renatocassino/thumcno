@@ -168,8 +168,9 @@ class ThumcnoServer
         if ($tim->tryBrowserCache()) {
             exit(0);
         }
+
         $tim->handleErrors();
-        if (((bool) Thumcno::$params['file_cache_enabled']) && $tim->tryServerCache()) {
+        if (((bool) Config::getInstance()->appConfigs['file_cache_enabled']) && $tim->tryServerCache()) {
             exit(0);
         }
         $tim->handleErrors();
@@ -180,6 +181,7 @@ class ThumcnoServer
     public function __construct()
     {
         global $ALLOWED_SITES;
+        $config = Config::getInstance();
         $this->startTime = microtime(true);
         date_default_timezone_set('UTC');
         $this->debug(1, 'Starting new request from '.$this->getIP().' to '.$_SERVER['REQUEST_URI']);
@@ -187,16 +189,16 @@ class ThumcnoServer
         //On windows systems I'm assuming fileinode returns an empty string or a number that doesn't change. Check this.
         $this->salt = @filemtime(__FILE__).'-'.@fileinode(__FILE__);
         $this->debug(3, 'Salt is: '.$this->salt);
-        if (Thumcno::$params['file_cache_directory']) {
-            if (!is_dir(Thumcno::$params['file_cache_directory'])) {
-                @mkdir(Thumcno::$params['file_cache_directory']);
-                if (!is_dir(Thumcno::$params['file_cache_directory'])) {
+        if ($config->appConfigs['file_cache_directory']) {
+            if (!is_dir($config->appConfigs['file_cache_directory'])) {
+                @mkdir($config->appConfigs['file_cache_directory']);
+                if (!is_dir($config->appConfigs['file_cache_directory'])) {
                     $this->error('Could not create the file cache directory.');
 
                     return false;
                 }
             }
-            $this->cacheDirectory = Thumcno::$params['file_cache_directory'];
+            $this->cacheDirectory = $config->appConfigs['file_cache_directory'];
             if (!touch($this->cacheDirectory.'/index.html')) {
                 $this->error('Could not create the index.html file - to fix this create an empty file named index.html file in the cache directory.');
             }
@@ -206,11 +208,9 @@ class ThumcnoServer
         //Clean the cache before we do anything because we don't want the first visitor after FILE_CACHE_TIME_BETWEEN_CLEANS expires to get a stale image.
         $this->cleanCache();
 
-        $this->myHost = preg_replace('/^www\./i', '', $_SERVER['HTTP_HOST']);
-
-        $src = preg_replace('/^(\/?(\.+)\/)+/', '/', $this->param('src'));
-
-        $this->src = $this->param('path_images').'/'.$src;
+        $this->myHost = preg_replace('/^www\./i', '', $config->domain);
+        $src = preg_replace('/^(\/?(\.+)\/)+/', '/', $config->urlParams['src']);
+        $this->src = $config->appConfigs['path_images'].'/'.$src;
         $this->url = parse_url($this->src);
         $this->src = preg_replace('/https?:\/\/(?:www\.)?'.$this->myHost.'/i', '', $this->src);
 
@@ -219,7 +219,8 @@ class ThumcnoServer
 
             return false;
         }
-        if (Thumcno::$params['block_external_leechers'] && array_key_exists('HTTP_REFERER', $_SERVER) && (!preg_match('/^https?:\/\/(?:www\.)?'.$this->myHost.'(?:$|\/)/i', $_SERVER['HTTP_REFERER']))) {
+
+        if ($config->appConfigs['block_external_leechers'] && array_key_exists('HTTP_REFERER', $_SERVER) && (!preg_match('/^https?:\/\/(?:www\.)?'.$this->myHost.'(?:$|\/)/i', $_SERVER['HTTP_REFERER']))) {
             // base64 encoded red image that says 'no hotlinkers'
             // nothing to worry about! :)
             $imgData = base64_decode("R0lGODlhUAAMAIAAAP8AAP///yH5BAAHAP8ALAAAAABQAAwAAAJpjI+py+0Po5y0OgAMjjv01YUZ\nOGplhWXfNa6JCLnWkXplrcBmW+spbwvaVr/cDyg7IoFC2KbYVC2NQ5MQ4ZNao9Ynzjl9ScNYpneb\nDULB3RP6JuPuaGfuuV4fumf8PuvqFyhYtjdoeFgAADs=");
@@ -240,13 +241,13 @@ class ThumcnoServer
         } else {
             $this->debug(2, 'Is a request for an internal file: '.$this->src);
         }
-        if ($this->isURL && (!Thumcno::$params['allow_external'])) {
+        if ($this->isURL && (!$config->appConfigs['allow_external'])) {
             $this->error('You are not allowed to fetch images from an external website.');
 
             return false;
         }
         if ($this->isURL) {
-            if (Thumcno::$params['allow_external_sites']) {
+            if ($config->appConfigs['allow_external_sites']) {
                 $this->debug(2, 'Fetching from all external sites is enabled.');
             } else {
                 $this->debug(2, 'Fetching only from selected external sites is enabled.');
@@ -267,7 +268,7 @@ class ThumcnoServer
         if ($this->isURL) {
             $arr = explode('&', $_SERVER ['QUERY_STRING']);
             asort($arr);
-            $this->cachefile = $this->cacheDirectory.'/'.Thumcno::$params['file_cache_prefix'].$cachePrefix.md5($this->salt.implode('', $arr).$this->fileCacheVersion).Thumcno::$params['file_cache_suffix'];
+            $this->cachefile = $this->cacheDirectory.'/'.$config->appConfigs['file_cache_prefix'].$cachePrefix.md5($this->salt.implode('', $arr).$this->fileCacheVersion).$config->appConfigs['file_cache_suffix'];
         } else {
             $this->localImage = $this->getLocalImagePath($this->src);
             if (!$this->localImage) {
@@ -280,7 +281,7 @@ class ThumcnoServer
             $this->debug(1, "Local image path is {$this->localImage}");
             $this->localImageMTime = @filemtime($this->localImage);
             //We include the mtime of the local file in case in changes on disk.
-            $this->cachefile = $this->cacheDirectory.'/'.Thumcno::$params['file_cache_prefix'].$cachePrefix.md5($this->salt.$this->localImageMTime.implode('&', Thumcno::$url_params).$this->fileCacheVersion).Thumcno::$params['file_cache_suffix'];
+            $this->cachefile = $this->cacheDirectory.'/'.$config->appConfigs['file_cache_prefix'].$cachePrefix.md5($this->salt.$this->localImageMTime.implode('&', $config->urlParams).$this->fileCacheVersion).$config->appConfigs['file_cache_suffix'];
         }
         $this->debug(2, 'Cache file is: '.$this->cachefile);
 
@@ -296,7 +297,7 @@ class ThumcnoServer
     public function run()
     {
         if ($this->isURL) {
-            if (!Thumcno::$params['allow_external']) {
+            if (!$config->appConfigs['allow_external']) {
                 $this->debug(1, 'Got a request for an external image but allow_external is disabled so returning error msg.');
                 $this->error('You are not allowed to fetch images from an external website.');
 
@@ -324,15 +325,16 @@ class ThumcnoServer
     protected function handleErrors()
     {
         if ($this->haveErrors()) {
-            if (Thumcno::$params['not_found_image'] && $this->is404()) {
-                if ($this->serveImg(Thumcno::$params['not_found_image'])) {
+            $config = Config::getInstance();
+            if ($config->appConfigs['not_found_image'] && $this->is404()) {
+                if ($this->serveImg($config->appConfigs['not_found_image'])) {
                     exit(0);
                 } else {
                     $this->error('Additionally, the 404 image that is configured could not be found or there was an error serving it.');
                 }
             }
-            if (Thumcno::$params['error_image']) {
-                if ($this->serveImg(Thumcno::$params['error_image'])) {
+            if ($config->appConfigs['error_image']) {
+                if ($this->serveImg($config->appConfigs['error_image'])) {
                     exit(0);
                 } else {
                     $this->error('Additionally, the error image that is configured could not be found or there was an error serving it.');
@@ -346,7 +348,8 @@ class ThumcnoServer
     }
     protected function tryBrowserCache()
     {
-        if (Thumcno::$params['browser_cache_disable']) {
+        $config = Config::getInstance();
+        if ($config->appConfigs['browser_cache_disable']) {
             $this->debug(3, 'Browser caching is disabled');
 
             return false;
@@ -394,6 +397,7 @@ class ThumcnoServer
     }
     protected function tryServerCache()
     {
+        $config = Config::getInstance();
         $this->debug(3, 'Trying server cache');
         if (file_exists($this->cachefile)) {
             $this->debug(3, "Cachefile {$this->cachefile} exists");
@@ -402,10 +406,9 @@ class ThumcnoServer
                 if (filesize($this->cachefile) < 1) {
                     $this->debug(3, 'Found an empty cachefile indicating a failed earlier request. Checking how old it is.');
                     //Fetching error occured previously
-                    if (time() - @filemtime($this->cachefile) > Thumcno::$params['wait_between_fetch_errors']) {
-                        $this->debug(3, 'File is older than '.Thumcno::$params['wait_between_fetch_errors'].' seconds. Deleting and returning false so app can try and load file.');
+                    if (time() - @filemtime($this->cachefile) > $config->appConfigs['wait_between_fetch_errors']) {
+                        $this->debug(3, 'File is older than '.$config->appConfigs['wait_between_fetch_errors'].' seconds. Deleting and returning false so app can try and load file.');
                         @unlink($this->cachefile);
-
                         return false; //to indicate we didn't serve from cache and app should try and load
                     } else {
                         $this->debug(3, 'Empty cachefile is still fresh so returning message saying we had an error fetching this image from remote host.');
@@ -448,8 +451,9 @@ class ThumcnoServer
     }
     protected function serveErrors()
     {
+        $config = Config::getInstance();
         header($_SERVER['SERVER_PROTOCOL'].' 400 Bad Request');
-        if (!Thumcno::$params['display_error_messages']) {
+        if (!$config->appConfigs['display_error_messages']) {
             return;
         }
         $html = '<ul>';
@@ -463,23 +467,24 @@ class ThumcnoServer
     }
     protected function serveInternalImage()
     {
+        $config = Config::getInstance();
         $this->debug(3, "Local image path is $this->localImage");
         if (!$this->localImage) {
             $this->sanityFail('localImage not set after verifying it earlier in the code.');
-
             return false;
         }
+
         $fileSize = filesize($this->localImage);
-        if ($fileSize > Thumcno::$params['max_file_size']) {
+        if ($fileSize > $config->appConfigs['max_file_size']) {
             $this->error('The file you specified is greater than the maximum allowed file size.');
-
             return false;
         }
+
         if ($fileSize <= 0) {
             $this->error('The file you specified is <= 0 bytes.');
-
             return false;
         }
+
         $this->debug(3, 'Calling processImageAndWriteToCache() for local image.');
         if ($this->processImageAndWriteToCache($this->localImage)) {
             $this->serveCacheFile();
@@ -491,7 +496,8 @@ class ThumcnoServer
     }
     protected function cleanCache()
     {
-        if (Thumcno::$params['file_cache_time_between_cleans'] < 0) {
+        $config = Config::getInstance();
+        if ($config->appConfigs['file_cache_time_between_cleans'] < 0) {
             return;
         }
         $this->debug(3, 'cleanCache() called');
@@ -506,18 +512,18 @@ class ThumcnoServer
 
             return;
         }
-        if (@filemtime($lastCleanFile) < (time() - Thumcno::$params['file_cache_time_between_cleans'])) { //Cache was last cleaned more than 1 day ago
-            $this->debug(1, 'Cache was last cleaned more than '.Thumcno::$params['file_cache_time_between_cleans'].' seconds ago. Cleaning now.');
+        if (@filemtime($lastCleanFile) < (time() - $config->appConfigs['file_cache_time_between_cleans'])) { //Cache was last cleaned more than 1 day ago
+            $this->debug(1, 'Cache was last cleaned more than '.$config->appConfigs['file_cache_time_between_cleans'].' seconds ago. Cleaning now.');
             // Very slight race condition here, but worst case we'll have 2 or 3 servers cleaning the cache simultaneously once a day.
             if (!touch($lastCleanFile)) {
                 $this->error('Could not create cache clean timestamp file.');
             }
-            $files = glob($this->cacheDirectory.'/*'.Thumcno::$params['file_cache_suffix']);
+            $files = glob($this->cacheDirectory.'/*'.$config->appConfigs['file_cache_suffix']);
             if ($files) {
-                $timeAgo = time() - Thumcno::$params['file_cache_max_file_age'];
+                $timeAgo = time() - $config->appConfigs['file_cache_max_file_age'];
                 foreach ($files as $file) {
                     if (@filemtime($file) < $timeAgo) {
-                        $this->debug(3, "Deleting cache file $file older than max age: ".Thumcno::$params['file_cache_max_file_age'].' seconds');
+                        $this->debug(3, "Deleting cache file $file older than max age: ".$config->appConfigs['file_cache_max_file_age'].' seconds');
                         @unlink($file);
                     }
                 }
@@ -525,13 +531,14 @@ class ThumcnoServer
 
             return true;
         } else {
-            $this->debug(3, 'Cache was cleaned less than '.Thumcno::$params['file_cache_time_between_cleans'].' seconds ago so no cleaning needed.');
+            $this->debug(3, 'Cache was cleaned less than '.$config->appConfigs['file_cache_time_between_cleans'].' seconds ago so no cleaning needed.');
         }
 
         return false;
     }
     protected function processImageAndWriteToCache($localImage)
     {
+        $config = Config::getInstance();
         $sData = getimagesize($localImage);
         $origType = $sData[2];
         $mimeType = $sData['mime'];
@@ -564,23 +571,23 @@ class ThumcnoServer
         // get standard input properties
         $new_width = (int) abs($this->param('w', 0));
         $new_height = (int) abs($this->param('h', 0));
-        $zoom_crop = (int) $this->param('zc', Thumcno::$params['default_zc']);
-        $quality = (int) abs($this->param('q', Thumcno::$params['default_q']));
+        $zoom_crop = (int) $this->param('zc', $config->appConfigs['default_zc']);
+        $quality = (int) abs($this->param('q', $config->appConfigs['default_q']));
         $align = $this->cropTop ? 't' : $this->param('a', 'c');
-        $filters = $this->param('f', Thumcno::$params['default_f']);
-        $sharpen = (bool) $this->param('s', Thumcno::$params['default_s']);
-        $canvas_color = $this->param('cc', Thumcno::$params['default_cc']);
+        $filters = $this->param('f', $config->appConfigs['default_f']);
+        $sharpen = (bool) $this->param('s', $config->appConfigs['default_s']);
+        $canvas_color = $this->param('cc', $config->appConfigs['default_cc']);
         $canvas_trans = (bool) $this->param('ct', '1');
 
         // set default width and height if neither are set already
         if ($new_width == 0 && $new_height == 0) {
-            $new_width = (int) Thumcno::$params['default_width'];
-            $new_height = (int) Thumcno::$params['default_height'];
+            $new_width = (int) $config->appConfigs['default_width'];
+            $new_height = (int) $config->appConfigs['default_height'];
         }
 
         // ensure size limits can not be abused
-        $new_width = min($new_width, Thumcno::$params['max_width']);
-        $new_height = min($new_height, Thumcno::$params['max_height']);
+        $new_width = min($new_width, $config->appConfigs['max_width']);
+        $new_height = min($new_height, $config->appConfigs['max_height']);
 
         // set memory limit to be able to have enough space to resize larger images
         $this->setMemoryLimit();
@@ -622,7 +629,7 @@ class ThumcnoServer
         if (strlen($canvas_color) == 3) { //if is 3-char notation, edit string into 6-char notation
             $canvas_color = str_repeat(substr($canvas_color, 0, 1), 2).str_repeat(substr($canvas_color, 1, 1), 2).str_repeat(substr($canvas_color, 2, 1), 2);
         } elseif (strlen($canvas_color) != 6) {
-            $canvas_color = Thumcno::$params['default_cc']; // on error return default canvas color
+            $canvas_color = $config->appConfigs['default_cc']; // on error return default canvas color
         }
 
         $canvas_color_R = hexdec(substr($canvas_color, 0, 2));
@@ -632,7 +639,7 @@ class ThumcnoServer
         // Create a new transparent color for image
         // If is a png and Thumcno::$params['png_is_transparent'] is false then remove the alpha transparency
         // (and if is set a canvas color show it in the background)
-        if (preg_match('/^image\/png$/i', $mimeType) && !Thumcno::$params['png_is_transparent'] && $canvas_trans) {
+        if (preg_match('/^image\/png$/i', $mimeType) && !$config->appConfigs['png_is_transparent'] && $canvas_trans) {
             $color = imagecolorallocatealpha($canvas, $canvas_color_R, $canvas_color_G, $canvas_color_B, 127);
         } else {
             $color = imagecolorallocatealpha($canvas, $canvas_color_R, $canvas_color_G, $canvas_color_B, 0);
@@ -1058,7 +1065,7 @@ class ThumcnoServer
     {
         fwrite(self::$curlFH, $d);
         self::$curlDataWritten += strlen($d);
-        if (self::$curlDataWritten > Thumcno::$params['max_file_size']) {
+        if (self::$curlDataWritten > Config::getInstance()->appConfigs['max_file_size']) {
             return 0;
         } else {
             return strlen($d);
@@ -1106,6 +1113,7 @@ class ThumcnoServer
     }
     protected function sendImageHeaders($mimeType, $dataSize)
     {
+        $config = Config::getInstance();
         if (!preg_match('/^image\//i', $mimeType)) {
             $mimeType = 'image/'.$mimeType;
         }
@@ -1119,14 +1127,14 @@ class ThumcnoServer
         header('Accept-Ranges: none'); //Changed this because we don't accept range requests
         header('Last-Modified: '.$gmdate_modified);
         header('Content-Length: '.$dataSize);
-        if (Thumcno::$params['browser_cache_disable']) {
+        if ($config->appConfigs['browser_cache_disable']) {
             $this->debug(3, 'Browser cache is disabled so setting non-caching headers.');
             header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
             header('Pragma: no-cache');
             header('Expires: '.gmdate('D, d M Y H:i:s', time()));
         } else {
             $this->debug(3, 'Browser caching is enabled');
-            header('Cache-Control: max-age='.Thumcno::$params['browser_cache_max_age'].', must-revalidate');
+            header('Cache-Control: max-age='.$config->appConfigs['browser_cache_max_age'].', must-revalidate');
             header('Expires: '.$gmdate_expires);
         }
 
@@ -1137,8 +1145,9 @@ class ThumcnoServer
     }
     protected function param($property, $default = '')
     {
-        if (isset(Thumcno::$params[$property])) {
-            return Thumcno::$params[$property];
+        $config = Config::getInstance();
+        if (isset($config->params[$property])) {
+            return $config->params[$property];
         } else {
             return $default;
         }
@@ -1196,7 +1205,8 @@ class ThumcnoServer
     }
     protected function debug($level, $msg)
     {
-        if (Thumcno::$params['debug_on'] && $level <= Thumcno::$params['debug_level']) {
+        $config = Config::getInstance();
+        if ($config->appConfigs['debug_on'] && $level <= $config->appConfigs['debug_level']) {
             $execTime = sprintf('%.6f', microtime(true) - $this->startTime);
             $tick = sprintf('%.6f', 0);
             if ($this->lastBenchTime > 0) {
@@ -1221,14 +1231,15 @@ class ThumcnoServer
     }
     protected function setMemoryLimit()
     {
+        $config = Config::getInstance();
         $inimem = ini_get('memory_limit');
         $inibytes = self::returnBytes($inimem);
-        $ourbytes = self::returnBytes(Thumcno::$params['memory_limit']);
+        $ourbytes = self::returnBytes($config->appConfigs['memory_limit']);
         if ($inibytes < $ourbytes) {
-            ini_set('memory_limit', Thumcno::$params['memory_limit']);
-            $this->debug(3, "Increased memory from $inimem to ".Thumcno::$params['memory_limit']);
+            ini_set('memory_limit', $config->appConfigs['memory_limit']);
+            $this->debug(3, "Increased memory from $inimem to ".$config->appConfigs['memory_limit']);
         } else {
-            $this->debug(3, 'Not adjusting memory size because the current setting is '.$inimem.' and our size of '.Thumcno::$params['memory_limit'].' is smaller.');
+            $this->debug(3, 'Not adjusting memory size because the current setting is '.$inimem.' and our size of '.$config->appConfigs['memory_limit'].' is smaller.');
         }
     }
     protected static function returnBytes($size_str)
@@ -1243,6 +1254,7 @@ class ThumcnoServer
 
     protected function getURL($url, $tempfile)
     {
+        $config = Config::getInstance();
         $this->lastURLError = false;
         $url = preg_replace('/ /', '%20', $url);
         if (function_exists('curl_init')) {
@@ -1256,7 +1268,7 @@ class ThumcnoServer
             self::$curlDataWritten = 0;
             $this->debug(3, "Fetching url with curl: $url");
             $curl = curl_init($url);
-            curl_setopt($curl, CURLOPT_TIMEOUT, Thumcno::$params['curl_timeout']);
+            curl_setopt($curl, CURLOPT_TIMEOUT, $config->appConfigs['curl_timeout']);
             curl_setopt($curl, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/534.30 (KHTML, like Gecko) Chrome/12.0.742.122 Safari/534.30');
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($curl, CURLOPT_HEADER, 0);
