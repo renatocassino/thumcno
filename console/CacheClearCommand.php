@@ -5,13 +5,13 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 
-class ClearCacheCommand extends Command
+class CacheClearCommand extends Command
 {
     protected function configure()
     {
         $this
           // the name of the command (the part after "bin/console")
-          ->setName('clear:cache')
+          ->setName('cache:clear')
 
           // the short description shown while running "php bin/console list"
           ->setDescription('Clear cache for all images.')
@@ -34,17 +34,11 @@ class ClearCacheCommand extends Command
             $output->write('<comment>.</comment>');
         }
 
-        $output->writeln(PHP_EOL.'<info>Successfully! Cache cleared :D</info>'.PHP_EOL);
+        $output->writeln(PHP_EOL.PHP_EOL.'<info>Successfully! Cache cleared :D</info>'.PHP_EOL);
         $numberOfFiles = count($files) - 1;
         $output->writeln('Files deleted: <comment>' . $numberOfFiles . '</comment>');
-        $output->writeln('Cleared: <comment>' . $this->humanFilesize($fileSize) . '</comment>.');
-    }
-
-    private function humanFilesize($bytes, $decimals = 2) {
-        $sz = 'BKMGTP';
-        $factor = floor((strlen($bytes) - 1) / 3);
-        return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . @$sz[$factor];
+        $output->writeln('Cleared: <comment>' . humanFilesize($fileSize) . '</comment>.');
     }
 }
 
-$application->add(new ClearCacheCommand());
+$application->add(new CacheClearCommand());
