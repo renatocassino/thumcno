@@ -255,7 +255,7 @@ One more example:
 /<width>x<height>/<quality>/<source.jpg>
 http://localhost:8080/200x200/80/dubai.jpg
 
-Ps: If you doesn't set any params in your regex, you can pass like $_GET param.
+Ps: If you don't set any params in your regex, you can pass like $_GET param.
 ```
 
 Bugs
