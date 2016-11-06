@@ -64,8 +64,8 @@ class Config
         $this->setThumcnoPath();
         $this->setDomain();
         $this->setPort();
-        $this->setUrlParams();
         $this->setAppConfig();
+        $this->setUrlParams();
         $this->validateConfigs();
     }
 
