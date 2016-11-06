@@ -1146,12 +1146,13 @@ class ThumcnoServer
     protected function param($property, $default = '')
     {
         $config = Config::getInstance();
-        if (isset($config->params[$property])) {
-            return $config->params[$property];
+        if (isset($config->urlParams[$property])) {
+            return $config->urlParams[$property];
         } else {
             return $default;
         }
     }
+
     protected function openImage($mimeType, $src)
     {
         switch ($mimeType) {
