@@ -63,6 +63,8 @@ class CheckCommand extends Command
         if(0 == $errors) {
             $output->writeln(PHP_EOL.'<info>Congrats! Now you can start the server and use the application :D</info>');
             $output->writeln('You can run <comment>php thumcno server</comment> to start'.PHP_EOL);
+        } else {
+            $output->writeln(PHP_EOL.' <fg=red>You have '.$errors.' error(s) to fix</fg>'.PHP_EOL);
         }
     }
 }
