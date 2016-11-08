@@ -23,15 +23,6 @@ php thumcno config # Follow the instructions
 php thumcno serve
 ```
 
-### Docker
-
-If you prefer use Docker, you could be run
-```bash
-git clone git@github.com:tacnoman/thumcno.git
-docker pull tacnoman/thumcno
-docker run -p 8888:8888 -v /path/to/thumcno:/app php thumcno server
-```
-
 Based on timthumb:
 http://www.binarymoon.co.uk/projects/timthumb/
 
@@ -104,15 +95,27 @@ default_height = 100     ; Default thumbnail height. Allows overrid in timthumb-
 
 You need to replace only the necessary.
 
-See working in local machine
-----------------------------
+## See working in local machine
 
 To see in your local machine, run this commands:
 
 ```bash
-cd /path/to/thumbcno
+cd /path/to/thumcno
+php thumcno config
 php thumcno serve
 ```
+
+### Running with Docker
+
+```bash
+docker run -it -p 8888:80 tacnoman/thumcno ./thumcno server
+# Sharing folder
+docker run -it -p 8888:80 -v /path/to/thumcno/apps:/app/apps -v /path/to/thumcno/example_images:/app/example_images tacnoman/thumcno ./thumcno server
+```
+
+### Using with docker-compose
+
+#### TODO THIS!
 
 Now, go to your browser and open the url:
 
