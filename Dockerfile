@@ -1,6 +1,8 @@
 FROM php:7.0.12-fpm
 MAINTAINER Tacnoman renatocassino@gmail.com
 
+ENV PORT 80
+
 # Install wget and install/updates certificates
 RUN apt-get update
 RUN apt-get install -y wget build-essential
