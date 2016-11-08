@@ -23,10 +23,14 @@ class ServeCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $port = getenv('PORT');
+        if (!$port) {
+            $port = 8888;
+        }
         $output->writeln(PHP_EOL);
-        $output->writeln('Listening on: <info>http://0.0.0.0:8888</info>');
+        $output->writeln('Listening on: <info>http://0.0.0.0:'.$port.'</info>');
 
-        exec('php -S 0.0.0.0:8888 '.dirname(__DIR__).'/index.php');
+        exec('php -S 0.0.0.0:'.$port.' '.dirname(__DIR__).'/index.php');
         $output->writeln(PHP_EOL);
     }
 }
