@@ -184,11 +184,11 @@ class ThumcnoServer
         $config = Config::getInstance();
         $this->startTime = microtime(true);
         date_default_timezone_set('UTC');
-        $this->debug(1, 'Starting new request from '.$this->getIP().' to '.$_SERVER['REQUEST_URI']);
+        Logger::info('Starting new request from '.$this->getIP().' to '.$_SERVER['REQUEST_URI']);
         $this->calcDocRoot();
         //On windows systems I'm assuming fileinode returns an empty string or a number that doesn't change. Check this.
         $this->salt = @filemtime(__FILE__).'-'.@fileinode(__FILE__);
-        $this->debug(3, 'Salt is: '.$this->salt);
+        Logger::info('Salt is: '.$this->salt);
         if ($config->appConfigs['file_cache_directory']) {
             if (!is_dir($config->appConfigs['file_cache_directory'])) {
                 @mkdir($config->appConfigs['file_cache_directory']);
@@ -208,11 +208,18 @@ class ThumcnoServer
         //Clean the cache before we do anything because we don't want the first visitor after FILE_CACHE_TIME_BETWEEN_CLEANS expires to get a stale image.
         $this->cleanCache();
 
-        $this->myHost = preg_replace('/^www\./i', '', $config->domain);
-        $src = preg_replace('/^(\/?(\.+)\/)+/', '/', $config->urlParams['src']);
-        $this->src = $config->appConfigs['path_images'].'/'.$src;
-        $this->url = parse_url($this->src);
-        $this->src = preg_replace('/https?:\/\/(?:www\.)?'.$this->myHost.'/i', '', $this->src);
+
+        if(isset($config->urlParams['src'])) {
+            $this->myHost = preg_replace('/^www\./i', '', $config->domain);
+            $src = $config->urlParams['src'];
+            $src = preg_replace('/^(\/?(\.+)\/)+/', '/', $src);
+            $this->src = $config->appConfigs['path_images'].'/'.$src;
+            $this->url = parse_url($this->src);
+            $this->src = preg_replace('/https?:\/\/(?:www\.)?'.$this->myHost.'/i', '', $this->src);
+        } else {
+            $this->error('Not found `src` param');
+            return false;
+        }
 
         if (strlen($this->src) <= 3) {
             $this->error('No image specified');
@@ -236,10 +243,10 @@ class ThumcnoServer
         }
 
         if (preg_match('/^https?:\/\/[^\/]+/i', $this->src)) {
-            $this->debug(2, 'Is a request for an external URL: '.$this->src);
+            Logger::info('Is a request for an external URL: '.$this->src);
             $this->isURL = true;
         } else {
-            $this->debug(2, 'Is a request for an internal file: '.$this->src);
+            Logger::info('Is a request for an internal file: '.$this->src);
         }
         if ($this->isURL && (!$config->appConfigs['allow_external'])) {
             $this->error('You are not allowed to fetch images from an external website.');
@@ -248,13 +255,13 @@ class ThumcnoServer
         }
         if ($this->isURL) {
             if ($config->appConfigs['allow_external_sites']) {
-                $this->debug(2, 'Fetching from all external sites is enabled.');
+                Logger::debug('Fetching from all external sites is enabled.');
             } else {
-                $this->debug(2, 'Fetching only from selected external sites is enabled.');
+                Logger::debug('Fetching only from selected external sites is enabled.');
                 $allowed = false;
                 foreach ($ALLOWED_SITES as $site) {
                     if ((strtolower(substr($this->url['host'], -strlen($site) - 1)) === strtolower(".$site")) || (strtolower($this->url['host']) === strtolower($site))) {
-                        $this->debug(3, "URL hostname {$this->url['host']} matches $site so allowing.");
+                        Logger::debug("URL hostname {$this->url['host']} matches $site so allowing.");
                         $allowed = true;
                     }
                 }
@@ -272,25 +279,24 @@ class ThumcnoServer
         } else {
             $this->localImage = $this->getLocalImagePath($this->src);
             if (!$this->localImage) {
-                $this->debug(1, "Could not find the local image: {$this->localImage}");
-                $this->error('Could not find the internal image you specified.');
+                $this->error("Could not find the local image: {$this->localImage}");
                 $this->set404();
 
                 return false;
             }
-            $this->debug(1, "Local image path is {$this->localImage}");
+            Logger::info("Local image path is {$this->localImage}");
             $this->localImageMTime = @filemtime($this->localImage);
             //We include the mtime of the local file in case in changes on disk.
             $this->cachefile = $this->cacheDirectory.'/'.$config->appConfigs['file_cache_prefix'].$cachePrefix.md5($this->salt.$this->localImageMTime.implode('&', $config->urlParams).$this->fileCacheVersion).$config->appConfigs['file_cache_suffix'];
         }
-        $this->debug(2, 'Cache file is: '.$this->cachefile);
+        Logger::debug('Cache file is: '.$this->cachefile);
 
         return true;
     }
     public function __destruct()
     {
         foreach ($this->toDeletes as $del) {
-            $this->debug(2, "Deleting temp file $del");
+            Logger::debug("Deleting temp file $del");
             @unlink($del);
         }
     }
@@ -298,25 +304,25 @@ class ThumcnoServer
     {
         if ($this->isURL) {
             if (!$config->appConfigs['allow_external']) {
-                $this->debug(1, 'Got a request for an external image but allow_external is disabled so returning error msg.');
+                Logger::error('Got a request for an external image but allow_external is disabled so returning error msg.');
                 $this->error('You are not allowed to fetch images from an external website.');
 
                 return false;
             }
-            $this->debug(3, 'Got request for external image. Starting serveExternalImage.');
+            Logger::info('Got request for external image. Starting serveExternalImage.');
             if ($this->param('webshot')) {
                 if (WEBSHOT_ENABLED) {
-                    $this->debug(3, "webshot param is set, so we're going to take a webshot.");
+                    Logger::error("webshot param is set, so we're going to take a webshot.");
                     $this->serveWebshot();
                 } else {
                     $this->error('You added the webshot parameter but webshots are disabled on this server. You need to set WEBSHOT_ENABLED == true to enable webshots.');
                 }
             } else {
-                $this->debug(3, "webshot is NOT set so we're going to try to fetch a regular image.");
+                Logger::error("webshot is NOT set so we're going to try to fetch a regular image.");
                 $this->serveExternalImage();
             }
         } else {
-            $this->debug(3, 'Got request for internal image. Starting serveInternalImage()');
+            Logger::info('Got request for internal image. Starting serveInternalImage()');
             $this->serveInternalImage();
         }
 
@@ -350,12 +356,12 @@ class ThumcnoServer
     {
         $config = Config::getInstance();
         if ($config->appConfigs['browser_cache_disable']) {
-            $this->debug(3, 'Browser caching is disabled');
+            Logger::info('Browser caching is disabled');
 
             return false;
         }
         if (!empty($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
-            $this->debug(3, 'Got a conditional get');
+            Logger::info('Got a conditional get');
             $mtime = false;
             //We've already checked if the real file exists in the constructor
             if (!is_file($this->cachefile)) {
@@ -364,30 +370,30 @@ class ThumcnoServer
             }
             if ($this->localImageMTime) {
                 $mtime = $this->localImageMTime;
-                $this->debug(3, "Local real file's modification time is $mtime");
+                Logger::debug("Local real file's modification time is $mtime");
             } elseif (is_file($this->cachefile)) { //If it's not a local request then use the mtime of the cached file to determine the 304
                 $mtime = @filemtime($this->cachefile);
-                $this->debug(3, "Cached file's modification time is $mtime");
+                Logger::debug("Cached file's modification time is $mtime");
             }
             if (!$mtime) {
                 return false;
             }
 
             $iftime = strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']);
-            $this->debug(3, "The conditional get's if-modified-since unixtime is $iftime");
+            Logger::debug("The conditional get's if-modified-since unixtime is $iftime");
             if ($iftime < 1) {
-                $this->debug(3, 'Got an invalid conditional get modified since time. Returning false.');
+                Logger::debug('Got an invalid conditional get modified since time. Returning false.');
 
                 return false;
             }
             if ($iftime < $mtime) { //Real file or cache file has been modified since last request, so force refetch.
-                $this->debug(3, 'File has been modified since last fetch.');
+                Logger::debug('File has been modified since last fetch.');
 
                 return false;
             } else { //Otherwise serve a 304
-                $this->debug(3, 'File has not been modified since last get, so serving a 304.');
+                Logger::debug('File has not been modified since last get, so serving a 304.');
                 header($_SERVER['SERVER_PROTOCOL'].' 304 Not Modified');
-                $this->debug(1, 'Returning 304 not modified');
+                Logger::info('Returning 304 not modified');
 
                 return true;
             }
@@ -398,20 +404,20 @@ class ThumcnoServer
     protected function tryServerCache()
     {
         $config = Config::getInstance();
-        $this->debug(3, 'Trying server cache');
+        Logger::info('Trying server cache');
         if (file_exists($this->cachefile)) {
-            $this->debug(3, "Cachefile {$this->cachefile} exists");
+            Logger::info("Cachefile {$this->cachefile} exists");
             if ($this->isURL) {
-                $this->debug(3, 'This is an external request, so checking if the cachefile is empty which means the request failed previously.');
+                Logger::info('This is an external request, so checking if the cachefile is empty which means the request failed previously.');
                 if (filesize($this->cachefile) < 1) {
-                    $this->debug(3, 'Found an empty cachefile indicating a failed earlier request. Checking how old it is.');
+                    Logger::debug('Found an empty cachefile indicating a failed earlier request. Checking how old it is.');
                     //Fetching error occured previously
                     if (time() - @filemtime($this->cachefile) > $config->appConfigs['wait_between_fetch_errors']) {
-                        $this->debug(3, 'File is older than '.$config->appConfigs['wait_between_fetch_errors'].' seconds. Deleting and returning false so app can try and load file.');
+                        Logger::debug('File is older than '.$config->appConfigs['wait_between_fetch_errors'].' seconds. Deleting and returning false so app can try and load file.');
                         @unlink($this->cachefile);
                         return false; //to indicate we didn't serve from cache and app should try and load
                     } else {
-                        $this->debug(3, 'Empty cachefile is still fresh so returning message saying we had an error fetching this image from remote host.');
+                        Logger::error('Empty cachefile is still fresh so returning message saying we had an error fetching this image from remote host.');
                         $this->set404();
                         $this->error('An error occured fetching image.');
 
@@ -419,14 +425,14 @@ class ThumcnoServer
                     }
                 }
             } else {
-                $this->debug(3, "Trying to serve cachefile {$this->cachefile}");
+                Logger::info("Trying to serve cachefile {$this->cachefile}");
             }
             if ($this->serveCacheFile()) {
-                $this->debug(3, "Succesfully served cachefile {$this->cachefile}");
+                Logger::info("Succesfully served cachefile {$this->cachefile}");
 
                 return true;
             } else {
-                $this->debug(3, "Failed to serve cachefile {$this->cachefile} - Deleting it from cache.");
+                Logger::info("Failed to serve cachefile {$this->cachefile} - Deleting it from cache.");
                 //Image serving failed. We can't retry at this point, but lets remove it from cache so the next request recreates it
                 @unlink($this->cachefile);
 
@@ -436,7 +442,7 @@ class ThumcnoServer
     }
     protected function error($err)
     {
-        $this->debug(3, "Adding error message: $err");
+        Logger::emergency($err);
         $this->errors[] = $err;
 
         return false;
@@ -462,13 +468,15 @@ class ThumcnoServer
         }
         $html .= '</ul>';
         echo '<h1>A TimThumb error has occured</h1>The following error(s) occured:<br />'.$html.'<br />';
-        echo '<br />Query String : '.htmlentities($_SERVER['QUERY_STRING'], ENT_QUOTES);
+        if(isset($_SERVER['QUERY_STRING'])) {
+            echo '<br />Query String : '.htmlentities($_SERVER['QUERY_STRING'], ENT_QUOTES);
+        }
         echo '<br />TimThumb version : '.VERSION.'</pre>';
     }
     protected function serveInternalImage()
     {
         $config = Config::getInstance();
-        $this->debug(3, "Local image path is $this->localImage");
+        Logger::info("Local image path is $this->localImage");
         if (!$this->localImage) {
             $this->sanityFail('localImage not set after verifying it earlier in the code.');
             return false;
@@ -485,7 +493,7 @@ class ThumcnoServer
             return false;
         }
 
-        $this->debug(3, 'Calling processImageAndWriteToCache() for local image.');
+        Logger::debug('Calling processImageAndWriteToCache() for local image.');
         if ($this->processImageAndWriteToCache($this->localImage)) {
             $this->serveCacheFile();
 
@@ -500,12 +508,12 @@ class ThumcnoServer
         if ($config->appConfigs['file_cache_time_between_cleans'] < 0) {
             return;
         }
-        $this->debug(3, 'cleanCache() called');
+        Logger::debug('cleanCache() called');
         $lastCleanFile = $this->cacheDirectory.'/timthumb_cacheLastCleanTime.touch';
 
         //If this is a new timthumb installation we need to create the file
         if (!is_file($lastCleanFile)) {
-            $this->debug(1, "File tracking last clean doesn't exist. Creating $lastCleanFile");
+            Logger::debug("File tracking last clean doesn't exist. Creating $lastCleanFile");
             if (!touch($lastCleanFile)) {
                 $this->error('Could not create cache clean timestamp file.');
             }
@@ -513,7 +521,7 @@ class ThumcnoServer
             return;
         }
         if (@filemtime($lastCleanFile) < (time() - $config->appConfigs['file_cache_time_between_cleans'])) { //Cache was last cleaned more than 1 day ago
-            $this->debug(1, 'Cache was last cleaned more than '.$config->appConfigs['file_cache_time_between_cleans'].' seconds ago. Cleaning now.');
+            Logger::debug('Cache was last cleaned more than '.$config->appConfigs['file_cache_time_between_cleans'].' seconds ago. Cleaning now.');
             // Very slight race condition here, but worst case we'll have 2 or 3 servers cleaning the cache simultaneously once a day.
             if (!touch($lastCleanFile)) {
                 $this->error('Could not create cache clean timestamp file.');
@@ -523,7 +531,7 @@ class ThumcnoServer
                 $timeAgo = time() - $config->appConfigs['file_cache_max_file_age'];
                 foreach ($files as $file) {
                     if (@filemtime($file) < $timeAgo) {
-                        $this->debug(3, "Deleting cache file $file older than max age: ".$config->appConfigs['file_cache_max_file_age'].' seconds');
+                        Logger::debug("Deleting cache file $file older than max age: ".$config->appConfigs['file_cache_max_file_age'].' seconds');
                         @unlink($file);
                     }
                 }
@@ -531,7 +539,7 @@ class ThumcnoServer
 
             return true;
         } else {
-            $this->debug(3, 'Cache was cleaned less than '.$config->appConfigs['file_cache_time_between_cleans'].' seconds ago so no cleaning needed.');
+            Logger::debug('Cache was cleaned less than '.$config->appConfigs['file_cache_time_between_cleans'].' seconds ago so no cleaning needed.');
         }
 
         return false;
@@ -543,7 +551,7 @@ class ThumcnoServer
         $origType = $sData[2];
         $mimeType = $sData['mime'];
 
-        $this->debug(3, "Mime type of image is $mimeType");
+        Logger::info("Mime type of image is $mimeType");
         if (!preg_match('/^image\/(?:gif|jpg|jpeg|png)$/i', $mimeType)) {
             return $this->error('The image being resized is not a valid gif, jpg or png.');
         }
@@ -787,43 +795,43 @@ class ThumcnoServer
 
         if ($imgType == 'png' && OPTIPNG_ENABLED && OPTIPNG_PATH && @is_file(OPTIPNG_PATH)) {
             $exec = OPTIPNG_PATH;
-            $this->debug(3, "optipng'ing $tempfile");
+            Logger::debug("optipng'ing $tempfile");
             $presize = filesize($tempfile);
             $out = `$exec -o1 $tempfile`; //you can use up to -o7 but it really slows things down
             clearstatcache();
             $aftersize = filesize($tempfile);
             $sizeDrop = $presize - $aftersize;
             if ($sizeDrop > 0) {
-                $this->debug(1, "optipng reduced size by $sizeDrop");
+                Logger::debug("optipng reduced size by $sizeDrop");
             } elseif ($sizeDrop < 0) {
-                $this->debug(1, "optipng increased size! Difference was: $sizeDrop");
+                Logger::debug("optipng increased size! Difference was: $sizeDrop");
             } else {
-                $this->debug(1, 'optipng did not change image size.');
+                Logger::debug('optipng did not change image size.');
             }
         } elseif ($imgType == 'png' && PNGCRUSH_ENABLED && PNGCRUSH_PATH && @is_file(PNGCRUSH_PATH)) {
             $exec = PNGCRUSH_PATH;
             $tempfile2 = tempnam($this->cacheDirectory, 'timthumb_tmpimg_');
-            $this->debug(3, "pngcrush'ing $tempfile to $tempfile2");
+            Logger::debug("pngcrush'ing $tempfile to $tempfile2");
             $out = `$exec $tempfile $tempfile2`;
             $todel = '';
             if (is_file($tempfile2)) {
                 $sizeDrop = filesize($tempfile) - filesize($tempfile2);
                 if ($sizeDrop > 0) {
-                    $this->debug(1, "pngcrush was succesful and gave a $sizeDrop byte size reduction");
+                    Logger::debug("pngcrush was succesful and gave a $sizeDrop byte size reduction");
                     $todel = $tempfile;
                     $tempfile = $tempfile2;
                 } else {
-                    $this->debug(1, "pngcrush did not reduce file size. Difference was $sizeDrop bytes.");
+                    Logger::debug("pngcrush did not reduce file size. Difference was $sizeDrop bytes.");
                     $todel = $tempfile2;
                 }
             } else {
-                $this->debug(3, "pngcrush failed with output: $out");
+                Logger::debug("pngcrush failed with output: $out");
                 $todel = $tempfile2;
             }
             @unlink($todel);
         }
 
-        $this->debug(3, 'Rewriting image with security header.');
+        Logger::debug('Rewriting image with security header.');
         $tempfile4 = tempnam($this->cacheDirectory, 'timthumb_tmpimg_');
         $context = stream_context_create();
         $fp = fopen($tempfile, 'r', 0, $context);
@@ -831,7 +839,7 @@ class ThumcnoServer
         file_put_contents($tempfile4, $fp, FILE_APPEND);
         fclose($fp);
         @unlink($tempfile);
-        $this->debug(3, 'Locking and replacing cache file.');
+        Logger::debug('Locking and replacing cache file.');
         $lockFile = $this->cachefile.'.lock';
         $fh = fopen($lockFile, 'w');
         if (!$fh) {
@@ -850,7 +858,7 @@ class ThumcnoServer
 
             return $this->error('Could not get a lock for writing.');
         }
-        $this->debug(3, 'Done image replace with security header. Cleaning up and running cleanCache()');
+        Logger::debug('Done image replace with security header. Cleaning up and running cleanCache()');
         imagedestroy($canvas);
         imagedestroy($image);
 
@@ -863,30 +871,30 @@ class ThumcnoServer
             $docRoot = LOCAL_FILE_BASE_DIRECTORY;
         }
         if (!isset($docRoot)) {
-            $this->debug(3, 'DOCUMENT_ROOT is not set. This is probably windows. Starting search 1.');
+            Logger::debug('DOCUMENT_ROOT is not set. This is probably windows. Starting search 1.');
             if (isset($_SERVER['SCRIPT_FILENAME'])) {
                 $docRoot = str_replace('\\', '/', substr($_SERVER['SCRIPT_FILENAME'], 0, 0 - strlen($_SERVER['PHP_SELF'])));
-                $this->debug(3, "Generated docRoot using SCRIPT_FILENAME and PHP_SELF as: $docRoot");
+                Logger::debug("Generated docRoot using SCRIPT_FILENAME and PHP_SELF as: $docRoot");
             }
         }
         if (!isset($docRoot)) {
-            $this->debug(3, 'DOCUMENT_ROOT still is not set. Starting search 2.');
+            Logger::debug('DOCUMENT_ROOT still is not set. Starting search 2.');
             if (isset($_SERVER['PATH_TRANSLATED'])) {
                 $docRoot = str_replace('\\', '/', substr(str_replace('\\\\', '\\', $_SERVER['PATH_TRANSLATED']), 0, 0 - strlen($_SERVER['PHP_SELF'])));
-                $this->debug(3, "Generated docRoot using PATH_TRANSLATED and PHP_SELF as: $docRoot");
+                Logger::debug("Generated docRoot using PATH_TRANSLATED and PHP_SELF as: $docRoot");
             }
         }
         if ($docRoot && $_SERVER['DOCUMENT_ROOT'] != '/') {
             $docRoot = preg_replace('/\/$/', '', $docRoot);
         }
-        $this->debug(3, 'Doc root is: '.$docRoot);
+        Logger::debug('Doc root is: '.$docRoot);
         $this->docRoot = $docRoot;
     }
     protected function getLocalImagePath($src)
     {
         $src = ltrim($src, '/'); //strip off the leading '/'
         if (!$this->docRoot) {
-            $this->debug(3, 'We have no document root set, so as a last resort, lets check if the image is in the current dir and serve that.');
+            Logger::error('We have no document root set, so as a last resort, lets check if the image is in the current dir and serve that.');
             //We don't support serving images outside the current dir if we don't have a doc root for security reasons.
             $file = preg_replace('/^.*?([^\/\\\\]+)$/', '$1', $src); //strip off any path info and just leave the filename.
             if (is_file($file)) {
@@ -902,26 +910,26 @@ class ThumcnoServer
 
         //Try src under docRoot
         if (file_exists($this->docRoot.'/'.$src)) {
-            $this->debug(3, 'Found file as '.$this->docRoot.'/'.$src);
+            Logger::info('Found file as '.$this->docRoot.'/'.$src);
             $real = $this->realpath($this->docRoot.'/'.$src);
             if (stripos($real, $this->docRoot) === 0) {
                 return $real;
             } else {
-                $this->debug(1, 'Security block: The file specified occurs outside the document root.');
+                Logger::info('Security block: The file specified occurs outside the document root.');
                 //allow search to continue
             }
         }
         //Check absolute paths and then verify the real path is under doc root
         $absolute = $this->realpath('/'.$src);
         if ($absolute && file_exists($absolute)) { //realpath does file_exists check, so can probably skip the exists check here
-            $this->debug(3, "Found absolute path: $absolute");
+            Logger::info("Found absolute path: $absolute");
             if (!$this->docRoot) {
                 $this->sanityFail('docRoot not set when checking absolute path.');
             }
             if (stripos($absolute, $this->docRoot) === 0) {
                 return $absolute;
             } else {
-                $this->debug(1, 'Security block: The file specified occurs outside the document root.');
+                Logger::error('Security block: The file specified occurs outside the document root.');
                 //and continue search
             }
         }
@@ -937,14 +945,14 @@ class ThumcnoServer
 
         foreach ($sub_directories as $sub) {
             $base .= $sub.'/';
-            $this->debug(3, 'Trying file as: '.$base.$src);
+            Logger::info('Trying file as: '.$base.$src);
             if (file_exists($base.$src)) {
-                $this->debug(3, 'Found file as: '.$base.$src);
+                Logger::info('Found file as: '.$base.$src);
                 $real = $this->realpath($base.$src);
                 if (stripos($real, $this->realpath($this->docRoot)) === 0) {
                     return $real;
                 } else {
-                    $this->debug(1, 'Security block: The file specified occurs outside the document root.');
+                    Logger::warning('Security block: The file specified occurs outside the document root.');
                     //And continue search
                 }
             }
@@ -965,12 +973,12 @@ class ThumcnoServer
     }
     protected function toDelete($name)
     {
-        $this->debug(3, "Scheduling file $name to delete on destruct.");
+        Logger::debug("Scheduling file $name to delete on destruct.");
         $this->toDeletes[] = $name;
     }
     protected function serveWebshot()
     {
-        $this->debug(3, 'Starting serveWebshot');
+        Logger::notice('Starting serveWebshot');
         $instr = 'Please follow the instructions at http://code.google.com/p/timthumb/ to set your server up for taking website screenshots.';
         if (!is_file(WEBSHOT_CUTYCAPT)) {
             return $this->error("CutyCapt is not installed. $instr");
@@ -1007,9 +1015,9 @@ class ThumcnoServer
         } else {
             $command = "$xv --server-args=\"-screen 0, {$screenX}x{$screenY}x{$colDepth}\" $cuty $proxy --max-wait=$timeout --user-agent=\"$ua\" --javascript=$jsOn --java=$javaOn --plugins=$pluginsOn --js-can-open-windows=off --url=\"$url\" --out-format=$format --out=$tempfile";
         }
-        $this->debug(3, "Executing command: $command");
+        Logger::notice("Executing command: $command");
         $out = `$command`;
-        $this->debug(3, "Received output: $out");
+        Logger::info("Received output: $out");
         if (!is_file($tempfile)) {
             $this->set404();
 
@@ -1017,7 +1025,7 @@ class ThumcnoServer
         }
         $this->cropTop = true;
         if ($this->processImageAndWriteToCache($tempfile)) {
-            $this->debug(3, 'Image processed succesfully. Serving from cache');
+            Logger::info('Image processed succesfully. Serving from cache');
 
             return $this->serveCacheFile();
         } else {
@@ -1032,13 +1040,13 @@ class ThumcnoServer
             return false;
         }
         $tempfile = tempnam($this->cacheDirectory, 'timthumb');
-        $this->debug(3, "Fetching external image into temporary file $tempfile");
+        Logger::info("Fetching external image into temporary file $tempfile");
         $this->toDelete($tempfile);
         //fetch file here
         if (!$this->getURL($this->src, $tempfile)) {
             @unlink($this->cachefile);
             touch($this->cachefile);
-            $this->debug(3, 'Error fetching URL: '.$this->lastURLError);
+            Logger::error('Error fetching URL: '.$this->lastURLError);
             $this->error('Error reading the URL you specified from remote host.'.$this->lastURLError);
 
             return false;
@@ -1046,7 +1054,7 @@ class ThumcnoServer
 
         $mimeType = $this->getMimeType($tempfile);
         if (!preg_match("/^image\/(?:jpg|jpeg|gif|png)$/i", $mimeType)) {
-            $this->debug(3, "Remote file has invalid mime type: $mimeType");
+            Logger::info("Remote file has invalid mime type: $mimeType");
             @unlink($this->cachefile);
             touch($this->cachefile);
             $this->error("The remote file is not a valid image. Mimetype = '".$mimeType."'".$tempfile);
@@ -1054,7 +1062,7 @@ class ThumcnoServer
             return false;
         }
         if ($this->processImageAndWriteToCache($tempfile)) {
-            $this->debug(3, 'Image processed succesfully. Serving from cache');
+            Logger::notice('Image processed succesfully. Serving from cache');
 
             return $this->serveCacheFile();
         } else {
@@ -1073,7 +1081,7 @@ class ThumcnoServer
     }
     protected function serveCacheFile()
     {
-        $this->debug(3, "Serving {$this->cachefile}");
+        Logger::notice("Serving {$this->cachefile}");
         if (!is_file($this->cachefile)) {
             $this->error("serveCacheFile called in timthumb but we couldn't find the cached file.");
 
@@ -1102,7 +1110,7 @@ class ThumcnoServer
         if ($content != false) {
             $content = substr($content, strlen($this->filePrependSecurityBlock) + 6);
             echo $content;
-            $this->debug(3, 'Served using file_get_contents and echo');
+            Logger::info('Served using file_get_contents and echo');
 
             return true;
         } else {
@@ -1128,12 +1136,12 @@ class ThumcnoServer
         header('Last-Modified: '.$gmdate_modified);
         header('Content-Length: '.$dataSize);
         if ($config->appConfigs['browser_cache_disable']) {
-            $this->debug(3, 'Browser cache is disabled so setting non-caching headers.');
+            Logger::debug('Browser cache is disabled so setting non-caching headers.');
             header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
             header('Pragma: no-cache');
             header('Expires: '.gmdate('D, d M Y H:i:s', time()));
         } else {
-            $this->debug(3, 'Browser caching is enabled');
+            Logger::debug('Browser caching is enabled');
             header('Cache-Control: max-age='.$config->appConfigs['browser_cache_max_age'].', must-revalidate');
             header('Expires: '.$gmdate_expires);
         }
@@ -1204,23 +1212,12 @@ class ThumcnoServer
             return 'UNKNOWN';
         }
     }
-    protected function debug($level, $msg)
-    {
-        $config = Config::getInstance();
-        if ($config->appConfigs['debug_on'] && $level <= $config->appConfigs['debug_level']) {
-            $execTime = sprintf('%.6f', microtime(true) - $this->startTime);
-            $tick = sprintf('%.6f', 0);
-            if ($this->lastBenchTime > 0) {
-                $tick = sprintf('%.6f', microtime(true) - $this->lastBenchTime);
-            }
-            $this->lastBenchTime = microtime(true);
-            error_log('TimThumb Debug line '.__LINE__." [$execTime : $tick]: $msg");
-        }
-    }
+
     protected function sanityFail($msg)
     {
-        return $this->error("There is a problem in the timthumb code. Message: Please report this error at <a href='http://code.google.com/p/timthumb/issues/list'>timthumb's bug tracking page</a>: $msg");
+        return $this->error("There is a problem in the thumcno code. Message: Please report this error at <a href='https://github.com/tacnoman/thumcno'>thumcno's bug tracking page</a>: $msg");
     }
+
     protected function getMimeType($file)
     {
         $info = getimagesize($file);
@@ -1230,6 +1227,7 @@ class ThumcnoServer
 
         return '';
     }
+
     protected function setMemoryLimit()
     {
         $config = Config::getInstance();
@@ -1238,11 +1236,12 @@ class ThumcnoServer
         $ourbytes = self::returnBytes($config->appConfigs['memory_limit']);
         if ($inibytes < $ourbytes) {
             ini_set('memory_limit', $config->appConfigs['memory_limit']);
-            $this->debug(3, "Increased memory from $inimem to ".$config->appConfigs['memory_limit']);
+            Logger::warning("Increased memory from $inimem to ".$config->appConfigs['memory_limit']);
         } else {
-            $this->debug(3, 'Not adjusting memory size because the current setting is '.$inimem.' and our size of '.$config->appConfigs['memory_limit'].' is smaller.');
+            Logger::warning('Not adjusting memory size because the current setting is '.$inimem.' and our size of '.$config->appConfigs['memory_limit'].' is smaller.');
         }
     }
+
     protected static function returnBytes($size_str)
     {
         switch (substr($size_str, -1)) {
@@ -1259,7 +1258,7 @@ class ThumcnoServer
         $this->lastURLError = false;
         $url = preg_replace('/ /', '%20', $url);
         if (function_exists('curl_init')) {
-            $this->debug(3, 'Curl is installed so using it to fetch URL.');
+            Logger::debug('Curl is installed so using it to fetch URL.');
             self::$curlFH = fopen($tempfile, 'w');
             if (!self::$curlFH) {
                 $this->error("Could not open $tempfile for writing.");
@@ -1267,7 +1266,7 @@ class ThumcnoServer
                 return false;
             }
             self::$curlDataWritten = 0;
-            $this->debug(3, "Fetching url with curl: $url");
+            Logger::debug("Fetching url with curl: $url");
             $curl = curl_init($url);
             curl_setopt($curl, CURLOPT_TIMEOUT, $config->appConfigs['curl_timeout']);
             curl_setopt($curl, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/534.30 (KHTML, like Gecko) Chrome/12.0.742.122 Safari/534.30');
