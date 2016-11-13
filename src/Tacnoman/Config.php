@@ -73,7 +73,7 @@ class Config
      * Set thumcno path.
      *
      * @throws 
-     if the enviroment variable `THUMCNO_PATH` not defined
+     * if the enviroment variable `THUMCNO_PATH` not defined
      */
     public function setThumcnoPath()
     {
