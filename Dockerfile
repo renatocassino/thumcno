@@ -21,7 +21,7 @@ RUN chmod +x /usr/local/bin/composer
 RUN apt-get install -y git
 
 # Clone thumcno
-RUN cd / && git clone https://github.com/tacnoman/thumcno app --branch tests
+RUN cd / && git clone https://github.com/tacnoman/thumcno app
 
 # Configuring thumcno
 RUN cd /app && composer install
