@@ -72,7 +72,8 @@ class Config
     /**
      * Set thumcno path.
      *
-     * @throws Exception if the enviroment variable `THUMCNO_PATH` not defined
+     * @throws 
+     if the enviroment variable `THUMCNO_PATH` not defined
      */
     public function setThumcnoPath()
     {
@@ -138,7 +139,7 @@ class Config
             if (isset($_ENV['PERMIT_ONLY_DOMAIN']) && $_ENV['PERMIT_ONLY_DOMAIN']) {
                 $this->appConfigs = $defaultConfigs;
             } else {
-                throw new Exception('This domain is invalid.');
+                throw new \Exception('This domain is invalid.');
             }
         }
     }
