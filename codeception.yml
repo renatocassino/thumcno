@@ -12,7 +12,11 @@ settings:
 extensions:
     enabled:
         - Codeception\Extension\RunFailed
+class_name: UnitTester
+
 modules:
+    enabled:
+       - Asserts
     config:
         Db:
             dsn: ''

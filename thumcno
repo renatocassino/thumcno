@@ -1,0 +1,38 @@
+#!/usr/bin/env php
+<?php
+
+$autoload = __DIR__ . '/vendor/autoload.php';
+if(!file_exists($autoload)) {
+    echo 'You must run `composer install` first.';
+    return;
+}
+
+require __DIR__.'/vendor/autoload.php';
+
+use Symfony\Component\Console\Application;
+
+// Reading .env file if exists
+try {
+    $dotenv = new Dotenv\Dotenv(__DIR__);
+    $dotenv->load();
+} catch(\Exception $e) {
+    // If you are running config.
+}
+
+if(!isset($_ENV['THUMCNO_PATH'])) {
+    $_ENV['THUMCNO_PATH'] = __DIR__;
+}
+
+$application = new Application();
+
+function humanFilesize($bytes, $decimals = 2) {
+    $sz = 'BKMGTP';
+    $factor = floor((strlen($bytes) - 1) / 3);
+    return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . @$sz[$factor];
+}
+
+foreach(glob(__DIR__.'/console/*.php') as $file) {
+    require $file;
+}
+
+$application->run();
