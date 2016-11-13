@@ -2,6 +2,10 @@
 
 namespace Tacnoman;
 
+# Import libs to log
+use \Psr\Log\LogLevel;
+use \Katzgrau\KLogger\Logger;
+
 /*
  * TimThumb by Ben Gillbanks and Mark Maunder
  * Based on work done by Tim McDaniels and Darren Hoyt
@@ -1204,23 +1208,37 @@ class ThumcnoServer
             return 'UNKNOWN';
         }
     }
+
+    protected function getDebugLevel($level) {
+        switch($level) {
+            case 1: return LogLevel::EMERGENCY;
+            case 2: return LogLevel::ALERT;
+            case 3: return LogLevel::CRITICAL;
+            case 4: return LogLevel::ERROR;
+            case 5: return LogLevel::WARNING;
+            case 6: return LogLevel::NOTICE;
+            case 7: return LogLevel::INFO;
+            case 8: return LogLevel::DEBUG;
+        }
+
+        return LogLevel::ERROR;
+    }
+
     protected function debug($level, $msg)
     {
         $config = Config::getInstance();
-        if ($config->appConfigs['debug_on'] && $level <= $config->appConfigs['debug_level']) {
-            $execTime = sprintf('%.6f', microtime(true) - $this->startTime);
-            $tick = sprintf('%.6f', 0);
-            if ($this->lastBenchTime > 0) {
-                $tick = sprintf('%.6f', microtime(true) - $this->lastBenchTime);
-            }
-            $this->lastBenchTime = microtime(true);
-            error_log('TimThumb Debug line '.__LINE__." [$execTime : $tick]: $msg");
-        }
+        $configDebugLevel = $this->getDebugLevel($config->appConfigs['debug_level']);
+        $currentLevel = $this->getDebugLevel($level);
+
+        $logger = new Logger(__DIR__.'/../../logs', $configDebugLevel);
+        $logger->$currentLevel($msg);
     }
+
     protected function sanityFail($msg)
     {
-        return $this->error("There is a problem in the timthumb code. Message: Please report this error at <a href='http://code.google.com/p/timthumb/issues/list'>timthumb's bug tracking page</a>: $msg");
+        return $this->error("There is a problem in the thumcno code. Message: Please report this error at <a href='https://github.com/tacnoman/thumcno'>thumcno's bug tracking page</a>: $msg");
     }
+
     protected function getMimeType($file)
     {
         $info = getimagesize($file);
@@ -1230,6 +1248,7 @@ class ThumcnoServer
 
         return '';
     }
+
     protected function setMemoryLimit()
     {
         $config = Config::getInstance();
@@ -1243,6 +1262,7 @@ class ThumcnoServer
             $this->debug(3, 'Not adjusting memory size because the current setting is '.$inimem.' and our size of '.$config->appConfigs['memory_limit'].' is smaller.');
         }
     }
+
     protected static function returnBytes($size_str)
     {
         switch (substr($size_str, -1)) {

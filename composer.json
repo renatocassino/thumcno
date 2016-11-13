@@ -15,7 +15,8 @@
   "require": {
     "php": ">=5.3.0",
     "vlucas/phpdotenv": "^2.4",
-    "symfony/console": "*"
+    "symfony/console": "*",
+    "katzgrau/klogger": "dev-master"
   },
   "autoload": {
     "psr-0": {
