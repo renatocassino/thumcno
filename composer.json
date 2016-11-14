@@ -16,7 +16,8 @@
     "php": ">=5.3.0",
     "vlucas/phpdotenv": "^2.4",
     "symfony/console": "*",
-    "katzgrau/klogger": "dev-master"
+    "katzgrau/klogger": "dev-master",
+    "codeception/codeception": "^2.2"
   },
   "autoload": {
     "psr-0": {
