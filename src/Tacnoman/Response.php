@@ -4,7 +4,6 @@ namespace Tacnoman;
 
 class Response
 {
-
     /**
      * Exception.
      *

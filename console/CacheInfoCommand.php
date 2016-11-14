@@ -3,7 +3,6 @@
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\Question;
 
 class CacheInfoCommand extends Command
 {
@@ -18,7 +17,7 @@ class CacheInfoCommand extends Command
 
           // the full command description shown when running the command with
           // the "--help" option
-          ->setHelp("Show number of files and size.");
+          ->setHelp('Show number of files and size.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -26,17 +25,17 @@ class CacheInfoCommand extends Command
         $files = glob($_ENV['THUMCNO_PATH'].'/cache/*');
         $fileSize = 0;
 
-        foreach($files as $file) {
-            if(basename($file) == 'index.html') {
+        foreach ($files as $file) {
+            if (basename($file) == 'index.html') {
                 continue;
             }
             $fileSize += filesize($file);
         }
 
-        $numberOfFiles = count($files)-1;
+        $numberOfFiles = count($files) - 1;
         $output->writeln(PHP_EOL.'Cache information'.PHP_EOL);
-        $output->writeln('Files cache: <comment>' . $numberOfFiles . '</comment>');
-        $output->writeln('Size of cache files: <comment>' . humanFilesize($fileSize) . '</comment>.');
+        $output->writeln('Files cache: <comment>'.$numberOfFiles.'</comment>');
+        $output->writeln('Size of cache files: <comment>'.humanFilesize($fileSize).'</comment>.');
     }
 }
 

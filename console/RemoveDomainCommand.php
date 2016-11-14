@@ -19,7 +19,7 @@ class RemoveDomainCommand extends Command
 
           // the full command description shown when running the command with
           // the "--help" option
-          ->setHelp("This command remove an exist configuration for a domain.");
+          ->setHelp('This command remove an exist configuration for a domain.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -27,8 +27,8 @@ class RemoveDomainCommand extends Command
         $helper = $this->getHelper('question');
         $question = new Question('Please enter the domain to remove: <info>(without http://)</info>: ', '');
         $domain = $helper->ask($input, $output, $question);
-        
-        $question = new ChoiceQuestion('Are you sure delete the domain <comment>'.$domain.'</comment>: ', ['yes','no'], 0 );
+
+        $question = new ChoiceQuestion('Are you sure delete the domain <comment>'.$domain.'</comment>: ', ['yes', 'no'], 0);
         $question->setErrorMessage('Answer `%s` is invalid.');
         $answer = $helper->ask($input, $output, $question);
 
@@ -37,8 +37,9 @@ class RemoveDomainCommand extends Command
         }
 
         $path = $_ENV['THUMCNO_PATH'].'/apps/'.$domain.'.ini';
-        if(!file_exists($path)) {
+        if (!file_exists($path)) {
             $output->writeln('<fg=red>ERROR: The domain does not exist. Path: '.$path.'</>'.PHP_EOL);
+
             return;
         }
 

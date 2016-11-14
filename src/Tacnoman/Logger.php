@@ -2,37 +2,37 @@
 
 namespace Tacnoman;
 
-use \Psr\Log\LogLevel;
-use \Katzgrau\KLogger\Logger as KLogger;
+use Psr\Log\LogLevel;
+use Katzgrau\KLogger\Logger as KLogger;
 
 /**
- * Class Logger - Logging application in folder /path/to/thumcno/logs
+ * Class Logger - Logging application in folder /path/to/thumcno/logs.
  *
  * @author Tacnoman - Renato Cassino <renatocassino@gmail.com>
  */
 class Logger
 {
-    private static $_instance = null;
+    private static $instance = null;
     public $logger;
 
-    public static $path = __DIR__ . '/../../logs';
+    public static $path = __DIR__.'/../../logs';
 
     /**
-     * Get instance and setting the default logLevel
+     * Get instance and setting the default logLevel.
      *
      * @return \Tacnoman\Logger
      */
     public static function getInstance()
     {
-        if (is_null(self::$_instance)) {
-            self::$_instance = new static();
+        if (is_null(self::$instance)) {
+            self::$instance = new static();
             $config = Config::getInstance();
-            $configLogLevel = $config->appConfigs['debug_level'];
-            $logLevel = self::$_instance->getDebugLevel($configLogLevel);
-            self::$_instance->logger = new KLogger(self::$path, $logLevel);
+            $configLogLevel = $config->appConfigs['debug_level'] ?? 3;
+            $logLevel = self::$instance->getDebugLevel($configLogLevel);
+            self::$instance->logger = new KLogger(self::$path, $logLevel);
         }
 
-        return self::$_instance;
+        return self::$instance;
     }
 
     /**
@@ -43,88 +43,116 @@ class Logger
     }
 
     /**
-     * Method to add to log
-     * @param int|string $level of debug
-     * @param string $message to save in log
+     * Removing singleton.
      */
-    public static function log($level, $message) {
-        if(is_numeric($level)) {
-            $level = self::getDebugLevel($level);
-        }
-
-        Logger::getInstance()->logger->$level($message);
+    public function __destruct()
+    {
+        self::$instance = null;
     }
 
     /**
-     * Alias to log method
+     * Method to add to log.
+     *
+     * @param int|string $level   of debug
+     * @param string     $message to save in log
+     */
+    public static function log($level, $message)
+    {
+        if (is_numeric($level)) {
+            $level = self::getDebugLevel($level);
+        }
+
+        self::getInstance()->logger->$level($message);
+    }
+
+    /**
+     * Alias to log method.
+     *
      * @param string $message to save in log
      */
-    public static function emergency($message) {
+    public static function emergency($message)
+    {
         self::log(LogLevel::EMERGENCY, $message);
     }
 
     /**
-     * Alias to log method
+     * Alias to log method.
+     *
      * @param string $message to save in log
      */
-    public static function alert($message) {
+    public static function alert($message)
+    {
         self::log(LogLevel::ALERT, $message);
     }
 
     /**
-     * Alias to log method
+     * Alias to log method.
+     *
      * @param string $message to save in log
      */
-    public static function critical($message) {
+    public static function critical($message)
+    {
         self::log(LogLevel::CRITICAL, $message);
     }
 
     /**
-     * Alias to log method
+     * Alias to log method.
+     *
      * @param string $message to save in log
      */
-    public static function error($message) {
+    public static function error($message)
+    {
         self::log(LogLevel::ERROR, $message);
     }
 
     /**
-     * Alias to log method
+     * Alias to log method.
+     *
      * @param string $message to save in log
      */
-    public static function warning($message) {
+    public static function warning($message)
+    {
         self::log(LogLevel::WARNING, $message);
     }
 
     /**
-     * Alias to log method
+     * Alias to log method.
+     *
      * @param string $message to save in log
      */
-    public static function notice($message) {
+    public static function notice($message)
+    {
         self::log(LogLevel::NOTICE, $message);
     }
 
     /**
-     * Alias to log method
+     * Alias to log method.
+     *
      * @param string $message to save in log
      */
-    public static function info($message) {
+    public static function info($message)
+    {
         self::log(LogLevel::INFO, $message);
     }
 
     /**
-     * Alias to log method
+     * Alias to log method.
+     *
      * @param string $message to save in log
      */
-    public static function debug($message) {
+    public static function debug($message)
+    {
         self::log(LogLevel::DEBUG, $message);
     }
 
     /**
-     * Alias to log method
+     * Alias to log method.
+     *
      * @param string $message to save in log
      */
-    protected static function getDebugLevel($level) {
-        switch($level) {
+    protected static function getDebugLevel($level)
+    {
+        switch ($level) {
             case 1: return LogLevel::EMERGENCY;
             case 2: return LogLevel::ALERT;
             case 3: return LogLevel::CRITICAL;

@@ -18,7 +18,7 @@ class AddDomainCommand extends Command
 
           // the full command description shown when running the command with
           // the "--help" option
-          ->setHelp("This command add a new configuration for a domain.");
+          ->setHelp('This command add a new configuration for a domain.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

@@ -208,8 +208,7 @@ class ThumcnoServer
         //Clean the cache before we do anything because we don't want the first visitor after FILE_CACHE_TIME_BETWEEN_CLEANS expires to get a stale image.
         $this->cleanCache();
 
-
-        if(isset($config->urlParams['src'])) {
+        if (isset($config->urlParams['src'])) {
             $this->myHost = preg_replace('/^www\./i', '', $config->domain);
             $src = $config->urlParams['src'];
             $src = preg_replace('/^(\/?(\.+)\/)+/', '/', $src);
@@ -218,6 +217,7 @@ class ThumcnoServer
             $this->src = preg_replace('/https?:\/\/(?:www\.)?'.$this->myHost.'/i', '', $this->src);
         } else {
             $this->error('Not found `src` param');
+
             return false;
         }
 
@@ -415,6 +415,7 @@ class ThumcnoServer
                     if (time() - @filemtime($this->cachefile) > $config->appConfigs['wait_between_fetch_errors']) {
                         Logger::debug('File is older than '.$config->appConfigs['wait_between_fetch_errors'].' seconds. Deleting and returning false so app can try and load file.');
                         @unlink($this->cachefile);
+
                         return false; //to indicate we didn't serve from cache and app should try and load
                     } else {
                         Logger::error('Empty cachefile is still fresh so returning message saying we had an error fetching this image from remote host.');
@@ -468,7 +469,7 @@ class ThumcnoServer
         }
         $html .= '</ul>';
         echo '<h1>A TimThumb error has occured</h1>The following error(s) occured:<br />'.$html.'<br />';
-        if(isset($_SERVER['QUERY_STRING'])) {
+        if (isset($_SERVER['QUERY_STRING'])) {
             echo '<br />Query String : '.htmlentities($_SERVER['QUERY_STRING'], ENT_QUOTES);
         }
         echo '<br />TimThumb version : '.VERSION.'</pre>';
@@ -479,17 +480,20 @@ class ThumcnoServer
         Logger::info("Local image path is $this->localImage");
         if (!$this->localImage) {
             $this->sanityFail('localImage not set after verifying it earlier in the code.');
+
             return false;
         }
 
         $fileSize = filesize($this->localImage);
         if ($fileSize > $config->appConfigs['max_file_size']) {
             $this->error('The file you specified is greater than the maximum allowed file size.');
+
             return false;
         }
 
         if ($fileSize <= 0) {
             $this->error('The file you specified is <= 0 bytes.');
+
             return false;
         }
 

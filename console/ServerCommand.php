@@ -3,7 +3,6 @@
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\Question;
 
 class ServeCommand extends Command
 {
@@ -18,7 +17,7 @@ class ServeCommand extends Command
 
           // the full command description shown when running the command with
           // the "--help" option
-          ->setHelp("Create a server to run in localhost.");
+          ->setHelp('Create a server to run in localhost.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
