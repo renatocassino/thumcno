@@ -1,6 +1,8 @@
 #!/usr/bin/env php
 <?php
 
+require 'version.php';
+
 $autoload = __DIR__ . '/vendor/autoload.php';
 if(!file_exists($autoload)) {
     echo 'You must run `composer install` first.';

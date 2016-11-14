@@ -27,7 +27,7 @@ class ConfigCommand extends Command
         $output->writeln('     ██║   ██╔══██║██║   ██║██║╚██╔╝██║██║     ██║╚██╗██║██║   ██║');
         $output->writeln('     ██║   ██║  ██║╚██████╔╝██║ ╚═╝ ██║╚██████╗██║ ╚████║╚██████╔╝');
         $output->writeln('     ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝ ╚═════╝╚═╝  ╚═══╝ ╚═════╝ ');
-        $output->writeln('                                           The thumbnail generator');
+        $output->writeln(str_repeat(' ', 40-strlen(VERSION)) . 'The thumbnail generator - '.VERSION);
         $output->writeln('                                                       By Tacnoman');
         $output->writeln('');
 
