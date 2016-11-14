@@ -16,15 +16,6 @@ namespace Tacnoman;
  * $Rev$
  */
 
-/*
- * --- TimThumb CONFIGURATION ---
- * To edit the configs it is best to create a file called timthumb-config.php
- * and define variables you want to customize in there. It will automatically be
- * loaded by timthumb. This will save you having to re-edit these variables
- * everytime you download a new version
-*/
-define('VERSION', '2.8.14');                                                                        // Version of this script
-
 //These are now disabled by default because the file sizes of PNGs (and GIFs) are much smaller than we used to generate.
 //They only work for PNGs. GIFs and JPEGs are not affected.
 if (!defined('OPTIPNG_ENABLED')) {
@@ -472,7 +463,7 @@ class ThumcnoServer
         if (isset($_SERVER['QUERY_STRING'])) {
             echo '<br />Query String : '.htmlentities($_SERVER['QUERY_STRING'], ENT_QUOTES);
         }
-        echo '<br />TimThumb version : '.VERSION.'</pre>';
+        echo '<br />Thumcno version : '.VERSION.'</pre>';
     }
     protected function serveInternalImage()
     {

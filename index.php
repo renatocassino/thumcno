@@ -14,5 +14,8 @@ foreach(glob('./src/Tacnoman/*.php') as $filename) {
     require $filename;
 }
 
+// Version
+require 'version.php';
+
 $thumcno = new \Tacnoman\Thumcno();
 $thumcno->start();
