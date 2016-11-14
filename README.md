@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/tacnoman/thumcno.svg?branch=master)](https://travis-ci.org/tacnoman/thumcno)
+
 Thumcno - A Tacno Thumbnail Generator in runtime
 =================
 
