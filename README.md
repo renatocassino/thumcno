@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/tacnoman/thumcno.svg?branch=master)](https://travis-ci.org/tacnoman/thumcno)
 
+[![Code Climate](https://codeclimate.com/github/tacnoman/thumcno/badges/gpa.svg)](https://codeclimate.com/github/tacnoman/thumcno)
+
 Thumcno - A Tacno Thumbnail Generator in runtime
 =================
 
