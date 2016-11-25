@@ -2,20 +2,6 @@
 
 namespace Tacnoman;
 
-/*
- * TimThumb by Ben Gillbanks and Mark Maunder
- * Based on work done by Tim McDaniels and Darren Hoyt
- * http://code.google.com/p/timthumb/
- *
- * GNU General Public License, version 2
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
- *
- * Examples and documentation available on the project homepage
- * http://www.binarymoon.co.uk/projects/timthumb/
- *
- * $Rev$
- */
-
 //These are now disabled by default because the file sizes of PNGs (and GIFs) are much smaller than we used to generate.
 //They only work for PNGs. GIFs and JPEGs are not affected.
 if (!defined('OPTIPNG_ENABLED')) {
@@ -30,43 +16,6 @@ if (!defined('PNGCRUSH_ENABLED')) {
 if (!defined('PNGCRUSH_PATH')) {
     define('PNGCRUSH_PATH', '/usr/bin/pngcrush');
 } //This will only run if OPTIPNG_PATH is not set or is not valid
-
-/*
-    -------====Website Screenshots configuration - BETA====-------
-
-    If you just want image thumbnails and don't want website screenshots, you can safely leave this as is.
-
-    If you would like to get website screenshots set up, you will need root access to your own server.
-
-    Enable Thumcno::$params['allow_external_sites'] so you can fetch any external web page. This is more secure now that we're using a non-web folder for cache.
-    Enable Thumcno::$params['block_external_leechers'] so that your site doesn't generate thumbnails for the whole Internet.
-
-    Instructions to get website screenshots enabled on Ubuntu Linux:
-
-    1. Install Xvfb with the following command: sudo apt-get install subversion libqt4-webkit libqt4-dev g++ xvfb
-    2. Go to a directory where you can download some code
-    3. Check-out the latest version of CutyCapt with the following command: svn co https://cutycapt.svn.sourceforge.net/svnroot/cutycapt
-    4. Compile CutyCapt by doing: cd cutycapt/CutyCapt
-    5. qmake
-    6. make
-    7. cp CutyCapt /usr/local/bin/
-    8. Test it by running: xvfb-run --server-args="-screen 0, 1024x768x24" CutyCapt --url="http://markmaunder.com/" --out=test.png
-    9. If you get a file called test.png with something in it, it probably worked. Now test the script by accessing it as follows:
-    10. http://yoursite.com/path/to/timthumb.php?src=http://markmaunder.com/&webshot=1
-
-    Notes on performance:
-    The first time a webshot loads, it will take a few seconds.
-    From then on it uses the regular timthumb caching mechanism with the configurable options above
-    and loading will be very fast.
-
-    --ADVANCED USERS ONLY--
-    If you'd like a slight speedup (about 25%) and you know Linux, you can run the following command which will keep Xvfb running in the background.
-    nohup Xvfb :100 -ac -nolisten tcp -screen 0, 1024x768x24 > /dev/null 2>&1 &
-    Then set WEBSHOT_XVFB_RUNNING = true below. This will save your server having to fire off a new Xvfb server and shut it down every time a new shot is generated.
-    You will need to take responsibility for keeping Xvfb running in case it crashes. (It seems pretty stable)
-    You will also need to take responsibility for server security if you're running Xvfb as root.
-*/
-
 if (!defined('WEBSHOT_ENABLED')) {
     define('WEBSHOT_ENABLED', false);
 }            //Beta feature. Adding webshot=1 to your query string will cause the script to return a browser screenshot rather than try to fetch an image.
@@ -155,19 +104,18 @@ class ThumcnoServer
     {
         $tim = new self();
         $tim->handleErrors();
-        $tim->securityChecks();
+
         if ($tim->tryBrowserCache()) {
-            exit(0);
+            return;
+        }
+
+        if ($tim->tryServerCache()) {
+            return;
         }
 
         $tim->handleErrors();
-        if (((bool) Config::getInstance()->appConfigs['file_cache_enabled']) && $tim->tryServerCache()) {
-            exit(0);
-        }
-        $tim->handleErrors();
         $tim->run();
         $tim->handleErrors();
-        exit(0);
     }
     public function __construct()
     {
@@ -177,46 +125,22 @@ class ThumcnoServer
         date_default_timezone_set('UTC');
         Logger::info('Starting new request from '.$this->getIP().' to '.$_SERVER['REQUEST_URI']);
         $this->calcDocRoot();
-        //On windows systems I'm assuming fileinode returns an empty string or a number that doesn't change. Check this.
-        $this->salt = @filemtime(__FILE__).'-'.@fileinode(__FILE__);
-        Logger::info('Salt is: '.$this->salt);
-        if ($config->appConfigs['file_cache_directory']) {
-            if (!is_dir($config->appConfigs['file_cache_directory'])) {
-                @mkdir($config->appConfigs['file_cache_directory']);
-                if (!is_dir($config->appConfigs['file_cache_directory'])) {
-                    $this->error('Could not create the file cache directory.');
-
-                    return false;
-                }
-            }
-            $this->cacheDirectory = $config->appConfigs['file_cache_directory'];
-            if (!touch($this->cacheDirectory.'/index.html')) {
-                $this->error('Could not create the index.html file - to fix this create an empty file named index.html file in the cache directory.');
-            }
-        } else {
-            $this->cacheDirectory = sys_get_temp_dir();
-        }
-        //Clean the cache before we do anything because we don't want the first visitor after FILE_CACHE_TIME_BETWEEN_CLEANS expires to get a stale image.
+        $this->setSalt();
+        $this->setCacheDirectory();
         $this->cleanCache();
 
-        if (isset($config->urlParams['src'])) {
-            $this->myHost = preg_replace('/^www\./i', '', $config->domain);
-            $src = $config->urlParams['src'];
-            $src = preg_replace('/^(\/?(\.+)\/)+/', '/', $src);
-            $this->src = $config->appConfigs['path_images'].'/'.$src;
-            $this->url = parse_url($this->src);
-            $this->src = preg_replace('/https?:\/\/(?:www\.)?'.$this->myHost.'/i', '', $this->src);
-        } else {
+        if (!isset($config->urlParams['src'])) {
             $this->error('Not found `src` param');
-
             return false;
         }
 
-        if (strlen($this->src) <= 3) {
-            $this->error('No image specified');
+        $this->myHost = preg_replace('/^www\./i', '', $config->domain);
+        $src = $config->urlParams['src'];
+        $src = preg_replace('/^(\/?(\.+)\/)+/', '/', $src);
+        $this->src = $config->appConfigs['path_images'].'/'.$src;
+        $this->url = parse_url($this->src);
+        $this->src = preg_replace('/https?:\/\/(?:www\.)?'.$this->myHost.'/i', '', $this->src);
 
-            return false;
-        }
 
         if ($config->appConfigs['block_external_leechers'] && array_key_exists('HTTP_REFERER', $_SERVER) && (!preg_match('/^https?:\/\/(?:www\.)?'.$this->myHost.'(?:$|\/)/i', $_SERVER['HTTP_REFERER']))) {
             // base64 encoded red image that says 'no hotlinkers'
@@ -230,7 +154,6 @@ class ThumcnoServer
             echo $imgData;
 
             return false;
-            exit(0);
         }
 
         if (preg_match('/^https?:\/\/[^\/]+/i', $this->src)) {
@@ -291,6 +214,40 @@ class ThumcnoServer
             @unlink($del);
         }
     }
+
+    /**
+     * Create salt for request.
+     * On windows systems I'm assuming fileinode returns an empty string or a number that doesn't change. Check this.
+     */
+    protected function setSalt()
+    {
+        $this->salt = @filemtime(__FILE__).'-'.@fileinode(__FILE__);
+        Logger::info('Salt is: '.$this->salt);
+    }
+
+    /**
+     * Set cache directory, create and permission. If does not setted, use the tmp dir in SO
+     */
+    protected function setCacheDirectory()
+    {
+        $config = Config::getInstance();
+        if ($config->appConfigs['file_cache_directory']) {
+            if (!is_dir($config->appConfigs['file_cache_directory'])) {
+                @mkdir($config->appConfigs['file_cache_directory']);
+                if (!is_dir($config->appConfigs['file_cache_directory'])) {
+                    $this->error('Could not create the file cache directory.');
+                    return false;
+                }
+            }
+            $this->cacheDirectory = $config->appConfigs['file_cache_directory'];
+            if (!touch($this->cacheDirectory.'/index.html')) {
+                $this->error('Could not create the index.html file - to fix this create an empty file named index.html file in the cache directory.');
+            }
+        } else {
+            $this->cacheDirectory = sys_get_temp_dir();
+        }
+    }
+    
     public function run()
     {
         if ($this->isURL) {
@@ -343,22 +300,27 @@ class ThumcnoServer
 
         return false;
     }
+
+    /**
+     * Try to get browser cache
+     * @return bool
+     */
     protected function tryBrowserCache()
     {
         $config = Config::getInstance();
         if ($config->appConfigs['browser_cache_disable']) {
-            Logger::info('Browser caching is disabled');
-
+            Logger::error('Browser caching is disabled');
             return false;
         }
+
         if (!empty($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
             Logger::info('Got a conditional get');
             $mtime = false;
-            //We've already checked if the real file exists in the constructor
+
             if (!is_file($this->cachefile)) {
-                //If we don't have something cached, regenerate the cached image.
                 return false;
             }
+
             if ($this->localImageMTime) {
                 $mtime = $this->localImageMTime;
                 Logger::debug("Local real file's modification time is $mtime");
@@ -389,9 +351,14 @@ class ThumcnoServer
                 return true;
             }
         }
-
         return false;
     }
+
+    /**
+     * Try to get generated cache in server
+     *
+     * @return bool
+     */
     protected function tryServerCache()
     {
         $config = Config::getInstance();
@@ -419,15 +386,14 @@ class ThumcnoServer
             } else {
                 Logger::info("Trying to serve cachefile {$this->cachefile}");
             }
+
             if ($this->serveCacheFile()) {
                 Logger::info("Succesfully served cachefile {$this->cachefile}");
-
                 return true;
             } else {
                 Logger::info("Failed to serve cachefile {$this->cachefile} - Deleting it from cache.");
                 //Image serving failed. We can't retry at this point, but lets remove it from cache so the next request recreates it
                 @unlink($this->cachefile);
-
                 return true;
             }
         }
@@ -499,6 +465,7 @@ class ThumcnoServer
     }
     protected function cleanCache()
     {
+        //Clean the cache before we do anything because we don't want the first visitor after FILE_CACHE_TIME_BETWEEN_CLEANS expires to get a stale image.
         $config = Config::getInstance();
         if ($config->appConfigs['file_cache_time_between_cleans'] < 0) {
             return;
@@ -512,7 +479,6 @@ class ThumcnoServer
             if (!touch($lastCleanFile)) {
                 $this->error('Could not create cache clean timestamp file.');
             }
-
             return;
         }
         if (@filemtime($lastCleanFile) < (time() - $config->appConfigs['file_cache_time_between_cleans'])) { //Cache was last cleaned more than 1 day ago
@@ -1142,9 +1108,6 @@ class ThumcnoServer
         }
 
         return true;
-    }
-    protected function securityChecks()
-    {
     }
     protected function param($property, $default = '')
     {
