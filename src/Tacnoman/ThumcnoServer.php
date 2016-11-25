@@ -250,6 +250,7 @@ class ThumcnoServer
     
     public function run()
     {
+        $config = Config::getInstance();
         if ($this->isURL) {
             if (!$config->appConfigs['allow_external']) {
                 Logger::error('Got a request for an external image but allow_external is disabled so returning error msg.');
