@@ -79,15 +79,15 @@ if (!isset($ALLOWED_SITES)) {
 
 class ThumcnoServer
 {
-    protected $src = '';
-    protected $is404 = false;
-    protected $docRoot = '';
-    protected $lastURLError = false;
-    protected $localImage = '';
-    protected $localImageMTime = 0;
-    protected $url = false;
-    protected $myHost = '';
-    protected $isURL = false;
+    public $src = '';
+    public $is404 = false;
+    public $docRoot = '';
+    public $lastURLError = false;
+    public $localImage = '';
+    public $localImageMTime = 0;
+    public $url = false;
+    public $myHost = '';
+    public $isURL = false;
     protected $cachefile = '';
     protected $errors = array();
     protected $toDeletes = array();
@@ -100,24 +100,23 @@ class ThumcnoServer
     protected $filePrependSecurityBlock = "<?php die('Execution denied!'); //"; //Designed to have three letter mime type, space, question mark and greater than symbol appended. 6 bytes total.
     protected static $curlDataWritten = 0;
     protected static $curlFH = false;
+
     public static function start()
     {
         $tim = new self();
-        $tim->handleErrors();
-
-        if ($tim->tryBrowserCache()) {
-            return;
+        try {
+            $tim->configThumcno();
+            $tim->tryBrowserCache();
+            $tim->tryServerCache();
+            $tim->run();
+        } catch(\Exception $e) {
+            $tim->handleErrors();
         }
 
-        if ($tim->tryServerCache()) {
-            return;
-        }
-
-        $tim->handleErrors();
-        $tim->run();
         $tim->handleErrors();
     }
-    public function __construct()
+
+    public function configThumcno()
     {
         global $ALLOWED_SITES;
         $config = Config::getInstance();
@@ -128,62 +127,13 @@ class ThumcnoServer
         $this->setSalt();
         $this->setCacheDirectory();
         $this->cleanCache();
+        $this->setHostVars();
 
-        if (!isset($config->urlParams['src'])) {
-            $this->error('Not found `src` param');
-            return false;
+        if($this->ifPermittedByExternalReferer()) {
+            $this->blockByExternalReferer();
         }
 
-        $this->myHost = preg_replace('/^www\./i', '', $config->domain);
-        $src = $config->urlParams['src'];
-        $src = preg_replace('/^(\/?(\.+)\/)+/', '/', $src);
-        $this->src = $config->appConfigs['path_images'].'/'.$src;
-        $this->url = parse_url($this->src);
-        $this->src = preg_replace('/https?:\/\/(?:www\.)?'.$this->myHost.'/i', '', $this->src);
-
-
-        if ($config->appConfigs['block_external_leechers'] && array_key_exists('HTTP_REFERER', $_SERVER) && (!preg_match('/^https?:\/\/(?:www\.)?'.$this->myHost.'(?:$|\/)/i', $_SERVER['HTTP_REFERER']))) {
-            // base64 encoded red image that says 'no hotlinkers'
-            // nothing to worry about! :)
-            $imgData = base64_decode("R0lGODlhUAAMAIAAAP8AAP///yH5BAAHAP8ALAAAAABQAAwAAAJpjI+py+0Po5y0OgAMjjv01YUZ\nOGplhWXfNa6JCLnWkXplrcBmW+spbwvaVr/cDyg7IoFC2KbYVC2NQ5MQ4ZNao9Ynzjl9ScNYpneb\nDULB3RP6JuPuaGfuuV4fumf8PuvqFyhYtjdoeFgAADs=");
-            header('Content-Type: image/gif');
-            header('Content-Length: '.strlen($imgData));
-            header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-            header('Pragma: no-cache');
-            header('Expires: '.gmdate('D, d M Y H:i:s', time()));
-            echo $imgData;
-
-            return false;
-        }
-
-        if (preg_match('/^https?:\/\/[^\/]+/i', $this->src)) {
-            Logger::info('Is a request for an external URL: '.$this->src);
-            $this->isURL = true;
-        } else {
-            Logger::info('Is a request for an internal file: '.$this->src);
-        }
-        if ($this->isURL && (!$config->appConfigs['allow_external'])) {
-            $this->error('You are not allowed to fetch images from an external website.');
-
-            return false;
-        }
-        if ($this->isURL) {
-            if ($config->appConfigs['allow_external_sites']) {
-                Logger::debug('Fetching from all external sites is enabled.');
-            } else {
-                Logger::debug('Fetching only from selected external sites is enabled.');
-                $allowed = false;
-                foreach ($ALLOWED_SITES as $site) {
-                    if ((strtolower(substr($this->url['host'], -strlen($site) - 1)) === strtolower(".$site")) || (strtolower($this->url['host']) === strtolower($site))) {
-                        Logger::debug("URL hostname {$this->url['host']} matches $site so allowing.");
-                        $allowed = true;
-                    }
-                }
-                if (!$allowed) {
-                    return $this->error('You may not fetch images from that site. To enable this site in timthumb, you can either add it to $ALLOWED_SITES and set allow_external = true. Or you can set allow_external_sites = true, depending on your security needs.');
-                }
-            }
-        }
+        $this->validateExternalImage();
 
         $cachePrefix = ($this->isURL ? '_ext_' : '_int_');
         if ($this->isURL) {
@@ -200,6 +150,7 @@ class ThumcnoServer
             }
             Logger::info("Local image path is {$this->localImage}");
             $this->localImageMTime = @filemtime($this->localImage);
+
             //We include the mtime of the local file in case in changes on disk.
             $this->cachefile = $this->cacheDirectory.'/'.$config->appConfigs['file_cache_prefix'].$cachePrefix.md5($this->salt.$this->localImageMTime.implode('&', $config->urlParams).$this->fileCacheVersion).$config->appConfigs['file_cache_suffix'];
         }
@@ -247,7 +198,81 @@ class ThumcnoServer
             $this->cacheDirectory = sys_get_temp_dir();
         }
     }
-    
+
+    /**
+     * If block_external_leechers permit external referer and the request has a referer
+     */
+    public function ifPermittedByExternalReferer()
+    {
+        $config = Config::getInstance();
+        return ($config->appConfigs['block_external_leechers'] && array_key_exists('HTTP_REFERER', $_SERVER) && (!preg_match('/^https?:\/\/(?:www\.)?'.$this->myHost.'(?:$|\/)/i', $_SERVER['HTTP_REFERER'])));
+    }
+
+    protected function blockByExternalReferer()
+    {
+        // base64 encoded red image that says 'no hotlinkers'
+        // nothing to worry about! :)
+        $imgData = base64_decode("R0lGODlhUAAMAIAAAP8AAP///yH5BAAHAP8ALAAAAABQAAwAAAJpjI+py+0Po5y0OgAMjjv01YUZ\nOGplhWXfNa6JCLnWkXplrcBmW+spbwvaVr/cDyg7IoFC2KbYVC2NQ5MQ4ZNao9Ynzjl9ScNYpneb\nDULB3RP6JuPuaGfuuV4fumf8PuvqFyhYtjdoeFgAADs=");
+        header('Content-Type: image/gif');
+        header('Content-Length: '.strlen($imgData));
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+        header('Expires: '.gmdate('D, d M Y H:i:s', time()));
+        echo $imgData;
+        Logger::error("Blocking image by referer: {$_SERVER['HTTP_REFERER']}");
+        throw new \Exception('Error by referer');
+    }
+
+    public function setHostVars()
+    {
+        $config = Config::getInstance();
+        if (!isset($config->urlParams['src'])) {
+            $this->error('Not found `src` param');
+        }
+
+        $this->myHost = preg_replace('/^www\./i', '', $config->domain);
+        $src = $config->urlParams['src'];
+        $src = preg_replace('/^(\/?(\.+)\/)+/', '/', $src);
+
+        if (preg_match('/^https?:\/\/[^\/]+/i', $src)) {
+            Logger::info('Is a request for an external URL: '.$this->src);
+            $this->isURL = true;
+            $this->src = $src;
+        } else {
+            Logger::info('Is a request for an internal file: '.$this->src);
+            $this->src = $config->appConfigs['path_images'].'/'.$src;
+        }
+
+        $this->url = parse_url($this->src);
+        $this->src = preg_replace('/https?:\/\/(?:www\.)?'.$this->myHost.'/i', '', $this->src);
+    }
+
+    public function validateExternalImage()
+    {
+        $config = Config::getInstance();
+        if ($this->isURL && (!$config->appConfigs['allow_external'])) {
+            $this->error('You are not allowed to fetch images from an external website.');
+        }
+
+        if ($this->isURL) {
+            if ($config->appConfigs['allow_external_sites']) {
+                Logger::debug('Fetching from all external sites is enabled.');
+            } else {
+                Logger::debug('Fetching only from selected external sites is enabled.');
+                $allowed = false;
+                foreach ($ALLOWED_SITES as $site) {
+                    if ((strtolower(substr($this->url['host'], -strlen($site) - 1)) === strtolower(".$site")) || (strtolower($this->url['host']) === strtolower($site))) {
+                        Logger::debug("URL hostname {$this->url['host']} matches $site so allowing.");
+                        $allowed = true;
+                    }
+                }
+                if (!$allowed) {
+                    return $this->error('You may not fetch images from that site. To enable this site in timthumb, you can either add it to $ALLOWED_SITES and set allow_external = true. Or you can set allow_external_sites = true, depending on your security needs.');
+                }
+            }
+        }
+    }
+
     public function run()
     {
         $config = Config::getInstance();
@@ -403,6 +428,7 @@ class ThumcnoServer
     {
         Logger::emergency($err);
         $this->errors[] = $err;
+        throw new \Exception($err);
 
         return false;
     }
