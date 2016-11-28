@@ -96,7 +96,6 @@ class ThumcnoServer
     protected $lastBenchTime = 0;
     protected $cropTop = false;
     protected $salt = '';
-    protected $fileCacheVersion = 1; //Generally if timthumb.php is modifed (upgraded) then the salt changes and all cache files are recreated. This is a backup mechanism to force regen.
     protected $filePrependSecurityBlock = "<?php die('Execution denied!'); //"; //Designed to have three letter mime type, space, question mark and greater than symbol appended. 6 bytes total.
     protected static $curlDataWritten = 0;
     protected static $curlFH = false;
@@ -134,29 +133,7 @@ class ThumcnoServer
         }
 
         $this->validateExternalImage();
-
-        $cachePrefix = ($this->isURL ? '_ext_' : '_int_');
-        if ($this->isURL) {
-            $arr = explode('&', $_SERVER ['QUERY_STRING']);
-            asort($arr);
-            $this->cachefile = $this->cacheDirectory.'/'.$config->appConfigs['file_cache_prefix'].$cachePrefix.md5($this->salt.implode('', $arr).$this->fileCacheVersion).$config->appConfigs['file_cache_suffix'];
-        } else {
-            $this->localImage = $this->getLocalImagePath($this->src);
-            if (!$this->localImage) {
-                $this->error("Could not find the local image: {$this->localImage}");
-                $this->set404();
-
-                return false;
-            }
-            Logger::info("Local image path is {$this->localImage}");
-            $this->localImageMTime = @filemtime($this->localImage);
-
-            //We include the mtime of the local file in case in changes on disk.
-            $this->cachefile = $this->cacheDirectory.'/'.$config->appConfigs['file_cache_prefix'].$cachePrefix.md5($this->salt.$this->localImageMTime.implode('&', $config->urlParams).$this->fileCacheVersion).$config->appConfigs['file_cache_suffix'];
-        }
-        Logger::debug('Cache file is: '.$this->cachefile);
-
-        return true;
+        $this->setCacheNameFile();
     }
     public function __destruct()
     {
@@ -271,6 +248,32 @@ class ThumcnoServer
                 }
             }
         }
+    }
+
+    public function setCacheNameFile()
+    {
+        $config = Config::getInstance();
+        $cachePrefix = ($this->isURL ? '_ext_' : '_int_');
+        $fileCacheName = $config->appConfigs['file_cache_prefix'].$cachePrefix.md5($this->salt.implode('&', $config->urlParams));
+        die(var_dump($config->urlParams));
+
+        if (!$this->isURL) {
+            $this->localImage = $this->getLocalImagePath($this->src);
+            if (!$this->localImage) {
+                $this->error("Could not find the local image: {$this->localImage}");
+                $this->set404();
+                return false;
+            }
+            Logger::info("Local image path is {$this->localImage}");
+
+            // We include the mtime of the local file in case in changes on disk.
+            $this->localImageMTime = @filemtime($this->localImage);
+            $fileCacheName .= $this->localImageMTime;
+        }
+
+        $fileCacheName .= $config->appConfigs['file_cache_suffix'];
+        $this->cachefile = $this->cacheDirectory.'/'.$fileCacheName;
+        Logger::debug('Cache file is: '.$this->cachefile);
     }
 
     public function run()

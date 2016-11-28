@@ -168,11 +168,15 @@ class Config
     public function setUrlParams()
     {
         if (isset($this->appConfigs['route'])) {
-            preg_match('/'.$this->appConfigs['route'].'/', $_SERVER['REQUEST_URI'], $params);
+            $regex = '/'.$this->appConfigs['route'].'/i';
+            preg_match($regex, $_SERVER['REQUEST_URI'], $params);
             if (empty($params)) {
                 throw new \Exception('This route is invalid!');
             }
-            $params = array_replace($params, $_GET);
+
+            if ($this->appConfigs['permit_params_with_route']) {
+                $params = array_replace($params, $_GET);
+            }
         } else {
             $params = $_GET;
         }

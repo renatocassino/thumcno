@@ -123,7 +123,7 @@ class ConfigurationTest extends \Codeception\Test\Unit
     {
         $_GET = [];
         $_SERVER['REQUEST_URI'] = '/200x300/100/dubai.jpg';
-        $this->config->appConfigs = ['route' => '^\/(?P<w>\d+)x(?P<h>\d+)\/(?P<q>\d{1,3})\/(?<src>[\w.-]+)'];
+        $this->config->appConfigs = ['route' => '^\/(?P<w>\d+)x(?P<h>\d+)\/(?P<q>\d{1,3})\/(?<src>[\w.-]+)', 'permit_params_with_route' => 1];
         $this->config->setUrlParams();
         $this->assertEquals($this->config->urlParams['w'], 200);
         $this->assertEquals($this->config->urlParams['h'], 300);
@@ -131,15 +131,27 @@ class ConfigurationTest extends \Codeception\Test\Unit
         $this->assertEquals($this->config->urlParams['src'], 'dubai.jpg');
     }
 
-    public function testUrlParamsWithRouteAndGet()
+    public function testUrlParamsWithRouteAndGetPermittingGETParams()
     {
         $_GET = ['q' => 80];
         $_SERVER['REQUEST_URI'] = '/200x300/dubai.jpg';
-        $this->config->appConfigs = ['route' => '^\/(?P<w>\d+)x(?P<h>\d+)\/(?<src>[\w.-]+)'];
+        $this->config->appConfigs = ['route' => '^\/(?P<w>\d+)x(?P<h>\d+)\/(?<src>[\w.-]+)', 'permit_params_with_route' => 1];
         $this->config->setUrlParams();
         $this->assertEquals($this->config->urlParams['w'], 200);
         $this->assertEquals($this->config->urlParams['h'], 300);
         $this->assertEquals($this->config->urlParams['q'], 80);
         $this->assertEquals($this->config->urlParams['src'], 'dubai.jpg');
+    }
+
+    public function testPermittedGETParamsWithRouteWithout()
+    {
+        $_GET = ['zc' => 2];
+        $_SERVER['REQUEST_URI'] = '/200x300/dubai.jpg';
+        $this->config->appConfigs = ['route' => '^\/(?P<w>\d+)x(?P<h>\d+)\/(?<src>[\w.-]+)', 'permit_params_with_route' => 0];
+        $this->config->setUrlParams();
+        $this->assertEquals($this->config->urlParams['w'], 200);
+        $this->assertEquals($this->config->urlParams['h'], 300);
+        $this->assertEquals($this->config->urlParams['src'], 'dubai.jpg');
+        $this->assertFalse(isset($this->config->urlParams['zc']));
     }
 }
