@@ -108,7 +108,7 @@ class ThumcnoServer
             $tim->tryBrowserCache();
             $tim->tryServerCache();
             $tim->run();
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             $tim->handleErrors();
         }
 
@@ -128,7 +128,7 @@ class ThumcnoServer
         $this->cleanCache();
         $this->setHostVars();
 
-        if($this->ifPermittedByExternalReferer()) {
+        if ($this->ifPermittedByExternalReferer()) {
             $this->blockByExternalReferer();
         }
 
@@ -154,7 +154,7 @@ class ThumcnoServer
     }
 
     /**
-     * Set cache directory, create and permission. If does not setted, use the tmp dir in SO
+     * Set cache directory, create and permission. If does not setted, use the tmp dir in SO.
      */
     protected function setCacheDirectory()
     {
@@ -164,6 +164,7 @@ class ThumcnoServer
                 @mkdir($config->appConfigs['file_cache_directory']);
                 if (!is_dir($config->appConfigs['file_cache_directory'])) {
                     $this->error('Could not create the file cache directory.');
+
                     return false;
                 }
             }
@@ -177,12 +178,13 @@ class ThumcnoServer
     }
 
     /**
-     * If block_external_leechers permit external referer and the request has a referer
+     * If block_external_leechers permit external referer and the request has a referer.
      */
     public function ifPermittedByExternalReferer()
     {
         $config = Config::getInstance();
-        return ($config->appConfigs['block_external_leechers'] && array_key_exists('HTTP_REFERER', $_SERVER) && (!preg_match('/^https?:\/\/(?:www\.)?'.$this->myHost.'(?:$|\/)/i', $_SERVER['HTTP_REFERER'])));
+
+        return $config->appConfigs['block_external_leechers'] && array_key_exists('HTTP_REFERER', $_SERVER) && (!preg_match('/^https?:\/\/(?:www\.)?'.$this->myHost.'(?:$|\/)/i', $_SERVER['HTTP_REFERER']));
     }
 
     protected function blockByExternalReferer()
@@ -255,13 +257,13 @@ class ThumcnoServer
         $config = Config::getInstance();
         $cachePrefix = ($this->isURL ? '_ext_' : '_int_');
         $fileCacheName = $config->appConfigs['file_cache_prefix'].$cachePrefix.md5($this->salt.implode('&', $config->urlParams));
-        die(var_dump($config->urlParams));
 
         if (!$this->isURL) {
             $this->localImage = $this->getLocalImagePath($this->src);
             if (!$this->localImage) {
                 $this->error("Could not find the local image: {$this->localImage}");
                 $this->set404();
+
                 return false;
             }
             Logger::info("Local image path is {$this->localImage}");
@@ -331,7 +333,8 @@ class ThumcnoServer
     }
 
     /**
-     * Try to get browser cache
+     * Try to get browser cache.
+     *
      * @return bool
      */
     protected function tryBrowserCache()
@@ -339,6 +342,7 @@ class ThumcnoServer
         $config = Config::getInstance();
         if ($config->appConfigs['browser_cache_disable']) {
             Logger::error('Browser caching is disabled');
+
             return false;
         }
 
@@ -380,11 +384,12 @@ class ThumcnoServer
                 return true;
             }
         }
+
         return false;
     }
 
     /**
-     * Try to get generated cache in server
+     * Try to get generated cache in server.
      *
      * @return bool
      */
@@ -418,11 +423,13 @@ class ThumcnoServer
 
             if ($this->serveCacheFile()) {
                 Logger::info("Succesfully served cachefile {$this->cachefile}");
+
                 return true;
             } else {
                 Logger::info("Failed to serve cachefile {$this->cachefile} - Deleting it from cache.");
                 //Image serving failed. We can't retry at this point, but lets remove it from cache so the next request recreates it
                 @unlink($this->cachefile);
+
                 return true;
             }
         }
@@ -509,6 +516,7 @@ class ThumcnoServer
             if (!touch($lastCleanFile)) {
                 $this->error('Could not create cache clean timestamp file.');
             }
+
             return;
         }
         if (@filemtime($lastCleanFile) < (time() - $config->appConfigs['file_cache_time_between_cleans'])) { //Cache was last cleaned more than 1 day ago
