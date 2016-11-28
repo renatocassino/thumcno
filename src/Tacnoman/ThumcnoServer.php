@@ -202,6 +202,9 @@ class ThumcnoServer
         throw new \Exception('Error by referer');
     }
 
+    /**
+     * Set host vars (src, isURL and url).
+     */
     public function setHostVars()
     {
         $config = Config::getInstance();
@@ -226,6 +229,9 @@ class ThumcnoServer
         $this->src = preg_replace('/https?:\/\/(?:www\.)?'.$this->myHost.'/i', '', $this->src);
     }
 
+    /**
+     * If request an external images, validation here.
+     */
     public function validateExternalImage()
     {
         $config = Config::getInstance();
@@ -252,6 +258,10 @@ class ThumcnoServer
         }
     }
 
+    /**
+     * Set cachename file. Using url parameters (or route parameters), salt, filemtime (for local images)
+     * generate an encrypted uniq name for each request.
+     */
     public function setCacheNameFile()
     {
         $config = Config::getInstance();
@@ -341,7 +351,7 @@ class ThumcnoServer
     {
         $config = Config::getInstance();
         if ($config->appConfigs['browser_cache_disable']) {
-            Logger::error('Browser caching is disabled');
+            Logger::debug('Browser caching is disabled');
 
             return false;
         }
@@ -500,9 +510,14 @@ class ThumcnoServer
             return false;
         }
     }
+
+    /**
+     * Clear cache between requests.
+     * Clean before we do anything because we don't want the first visitor after FILE_CACHE_TIME_BETWEEN_CLEANS
+     * expires to get a stale image.
+     */
     protected function cleanCache()
     {
-        //Clean the cache before we do anything because we don't want the first visitor after FILE_CACHE_TIME_BETWEEN_CLEANS expires to get a stale image.
         $config = Config::getInstance();
         if ($config->appConfigs['file_cache_time_between_cleans'] < 0) {
             return;
@@ -1082,14 +1097,16 @@ class ThumcnoServer
     {
         Logger::notice("Serving {$this->cachefile}");
         if (!is_file($this->cachefile)) {
-            $this->error("serveCacheFile called in timthumb but we couldn't find the cached file.");
+            $this->error("serveCacheFile called in thumcno but we couldn't find the cached file.");
 
             return false;
         }
+
         $fp = fopen($this->cachefile, 'rb');
         if (!$fp) {
             return $this->error('Could not open cachefile.');
         }
+
         fseek($fp, strlen($this->filePrependSecurityBlock), SEEK_SET);
         $imgType = fread($fp, 3);
         fseek($fp, 3, SEEK_CUR);
@@ -1098,6 +1115,7 @@ class ThumcnoServer
 
             return $this->error('The cached image file seems to be corrupt.');
         }
+
         $imageDataSize = filesize($this->cachefile) - (strlen($this->filePrependSecurityBlock) + 6);
         $this->sendImageHeaders($imgType, $imageDataSize);
         $bytesSent = @fpassthru($fp);
@@ -1105,6 +1123,7 @@ class ThumcnoServer
         if ($bytesSent > 0) {
             return true;
         }
+
         $content = file_get_contents($this->cachefile);
         if ($content != false) {
             $content = substr($content, strlen($this->filePrependSecurityBlock) + 6);
